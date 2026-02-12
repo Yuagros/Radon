@@ -1,145 +1,2568 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Radon</title>
     <meta name="theme-color" content="#0b0b0c">
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%23dc2626' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%23dc2626' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Background effect */
-        .auth-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            background: radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.1) 0%, transparent 50%);
-        }
-
-        .auth-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 2.5rem;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .auth-logo {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--muted);
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
-        }
-
-        .auth-footer {
-            margin-top: 1.5rem;
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--muted);
-        }
-
-        .auth-footer a {
-            color: var(--accent);
-        }
-
-        .btn-full {
-            width: 100%;
-            text-align: center;
-            cursor: pointer;
-            border: none;
-            font-size: 1rem;
-        }
-    </style>
 </head>
-
-<body>
-
-    <div class="auth-container">
-        <div class="auth-bg"></div>
-
-        <div class="auth-card">
-            <div class="auth-header">
-                <svg class="auth-logo" viewBox="0 0 200 200">
-                    <path d="M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z" fill="none" stroke="#dc2626"
-                        stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <h1>Welcome Back</h1>
-                <p class="muted">Sign in to your Radon dashboard.</p>
-            </div>
-
-            <form action="dashboard.html">
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-input" placeholder="name@example.com" required>
+<body class="auth-page">
+    <main class="auth-shell container">
+        <section class="auth-column auth-main">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <svg class="auth-logo" viewBox="0 0 200 200">
+                        <path d="M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z" fill="none" stroke="#dc2626" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <h1>Welcome Back</h1>
+                    <p class="muted">Sign in to continue to your Radon workspace.</p>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-input" placeholder="••••••••" required>
+                <form id="login-form">
+                    <p class="muted" id="selected-plan"></p>
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" class="form-input" placeholder="name@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="********" required>
+                    </div>
+                    <div class="auth-inline">
+                        <label class="muted auth-checkbox">
+                            <input type="checkbox" id="remember-me"> Remember me
+                        </label>
+                        <button class="btn btn-ghost" id="toggle-password-btn" type="button">Show</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                    <button type="button" class="btn btn-ghost btn-full" id="demo-fill-btn">Use Demo Credentials</button>
+                </form>
+                <div class="auth-links">
+                    <a href="index.html" class="muted">Back to Home</a>
+                    <a href="dashboard.html" class="muted">Open Dashboard Demo</a>
                 </div>
-
-                <button type="submit" class="btn btn-primary btn-full">Sign In</button>
-            </form>
-
-            <div class="auth-footer">
-                Don't have an account? <a href="#">Contact Sales</a>
-                <br>
-                <a href="index.html"
-                    style="display: inline-block; margin-top: 10px; color: var(--muted); font-size: 0.8rem;">← Back to
-                    Home</a>
             </div>
-        </div>
-    </div>
-
+        </section>
+        <section class="auth-column auth-side">
+            <article class="card auth-panel">
+                <h2>Workspace Security</h2>
+                <p class="muted">Current operational status, authentication guidance, and rollout notes.</p>
+                <div class="security-grid">
+                    <div class="security-item">
+                        <h3>Control 1</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 2</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 3</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 4</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 5</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 6</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 7</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 8</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 9</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 10</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 11</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 12</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 13</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 14</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 15</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 16</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 17</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 18</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 19</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 20</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 21</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 22</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 23</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 24</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 25</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 26</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 27</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 28</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 29</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 30</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 31</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 32</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 33</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 34</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 35</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 36</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 37</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 38</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 39</h3>
+                        <p class=\
+                    </div>
+                    <div class="security-item">
+                        <h3>Control 40</h3>
+                        <p class=\
+                    </div>
+                </div>
+            </article>
+            <article class="card auth-panel">
+                <h2>Release Notes</h2>
+                <div class="status-feed">
+                    <div class="status-item">
+                        <h3>Update 1</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 2</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 3</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 4</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 5</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 6</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 7</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 8</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 9</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 10</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 11</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 12</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 13</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 14</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 15</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 16</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 17</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 18</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 19</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 20</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 21</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 22</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 23</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 24</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 25</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 26</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 27</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 28</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 29</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 30</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 31</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 32</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 33</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 34</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 35</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 36</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 37</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 38</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 39</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 40</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 41</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 42</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 43</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 44</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 45</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 46</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 47</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 48</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 49</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 50</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 51</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 52</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 53</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 54</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 55</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 56</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 57</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 58</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 59</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 60</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 61</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 62</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 63</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 64</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 65</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 66</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 67</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 68</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 69</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 70</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 71</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 72</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 73</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 74</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 75</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 76</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 77</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 78</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 79</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 80</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 81</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 82</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 83</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 84</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 85</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 86</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 87</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 88</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 89</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 90</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 91</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 92</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 93</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 94</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 95</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 96</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 97</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 98</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 99</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 100</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 101</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 102</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 103</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 104</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 105</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 106</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 107</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 108</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 109</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 110</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 111</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 112</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 113</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 114</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 115</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 116</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 117</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 118</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 119</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 120</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 121</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 122</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 123</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 124</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 125</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 126</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 127</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 128</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 129</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 130</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 131</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 132</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 133</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 134</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 135</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 136</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 137</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 138</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 139</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 140</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 141</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 142</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 143</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 144</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 145</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 146</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 147</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 148</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 149</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 150</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 151</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 152</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 153</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 154</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 155</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 156</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 157</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 158</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 159</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 160</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 161</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 162</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 163</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 164</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 165</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 166</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 167</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 168</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 169</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 170</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 171</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 172</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 173</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 174</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 175</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 176</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 177</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 178</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 179</h3>
+                        <p class=\
+                    </div>
+                    <div class="status-item">
+                        <h3>Update 180</h3>
+                        <p class=\
+                    </div>
+                </div>
+            </article>
+            <article class="card auth-panel">
+                <h2>Operator Playbook</h2>
+                <div class="faq-long">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 1: What should moderators do during lockout wave 1?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 1, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 2: What should moderators do during lockout wave 2?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 2, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 3: What should moderators do during lockout wave 3?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 3, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 4: What should moderators do during lockout wave 4?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 4, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 5: What should moderators do during lockout wave 5?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 5, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 6: What should moderators do during lockout wave 6?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 6, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 7: What should moderators do during lockout wave 7?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 7, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 8: What should moderators do during lockout wave 8?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 8, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 9: What should moderators do during lockout wave 9?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 9, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 10: What should moderators do during lockout wave 10?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 10, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 11: What should moderators do during lockout wave 11?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 11, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 12: What should moderators do during lockout wave 12?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 12, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 13: What should moderators do during lockout wave 13?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 13, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 14: What should moderators do during lockout wave 14?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 14, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 15: What should moderators do during lockout wave 15?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 15, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 16: What should moderators do during lockout wave 16?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 16, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 17: What should moderators do during lockout wave 17?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 17, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 18: What should moderators do during lockout wave 18?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 18, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 19: What should moderators do during lockout wave 19?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 19, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 20: What should moderators do during lockout wave 20?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 20, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 21: What should moderators do during lockout wave 21?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 21, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 22: What should moderators do during lockout wave 22?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 22, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 23: What should moderators do during lockout wave 23?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 23, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 24: What should moderators do during lockout wave 24?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 24, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 25: What should moderators do during lockout wave 25?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 25, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 26: What should moderators do during lockout wave 26?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 26, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 27: What should moderators do during lockout wave 27?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 27, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 28: What should moderators do during lockout wave 28?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 28, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 29: What should moderators do during lockout wave 29?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 29, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 30: What should moderators do during lockout wave 30?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 30, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 31: What should moderators do during lockout wave 31?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 31, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 32: What should moderators do during lockout wave 32?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 32, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 33: What should moderators do during lockout wave 33?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 33, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 34: What should moderators do during lockout wave 34?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 34, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 35: What should moderators do during lockout wave 35?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 35, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 36: What should moderators do during lockout wave 36?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 36, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 37: What should moderators do during lockout wave 37?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 37, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 38: What should moderators do during lockout wave 38?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 38, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 39: What should moderators do during lockout wave 39?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 39, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 40: What should moderators do during lockout wave 40?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 40, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 41: What should moderators do during lockout wave 41?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 41, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 42: What should moderators do during lockout wave 42?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 42, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 43: What should moderators do during lockout wave 43?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 43, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 44: What should moderators do during lockout wave 44?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 44, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 45: What should moderators do during lockout wave 45?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 45, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 46: What should moderators do during lockout wave 46?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 46, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 47: What should moderators do during lockout wave 47?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 47, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 48: What should moderators do during lockout wave 48?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 48, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 49: What should moderators do during lockout wave 49?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 49, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 50: What should moderators do during lockout wave 50?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 50, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 51: What should moderators do during lockout wave 51?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 51, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 52: What should moderators do during lockout wave 52?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 52, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 53: What should moderators do during lockout wave 53?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 53, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 54: What should moderators do during lockout wave 54?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 54, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 55: What should moderators do during lockout wave 55?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 55, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 56: What should moderators do during lockout wave 56?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 56, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 57: What should moderators do during lockout wave 57?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 57, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 58: What should moderators do during lockout wave 58?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 58, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 59: What should moderators do during lockout wave 59?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 59, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 60: What should moderators do during lockout wave 60?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 60, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 61: What should moderators do during lockout wave 61?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 61, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 62: What should moderators do during lockout wave 62?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 62, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 63: What should moderators do during lockout wave 63?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 63, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 64: What should moderators do during lockout wave 64?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 64, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 65: What should moderators do during lockout wave 65?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 65, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 66: What should moderators do during lockout wave 66?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 66, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 67: What should moderators do during lockout wave 67?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 67, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 68: What should moderators do during lockout wave 68?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 68, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 69: What should moderators do during lockout wave 69?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 69, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 70: What should moderators do during lockout wave 70?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 70, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 71: What should moderators do during lockout wave 71?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 71, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 72: What should moderators do during lockout wave 72?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 72, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 73: What should moderators do during lockout wave 73?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 73, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 74: What should moderators do during lockout wave 74?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 74, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 75: What should moderators do during lockout wave 75?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 75, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 76: What should moderators do during lockout wave 76?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 76, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 77: What should moderators do during lockout wave 77?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 77, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 78: What should moderators do during lockout wave 78?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 78, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 79: What should moderators do during lockout wave 79?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 79, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 80: What should moderators do during lockout wave 80?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 80, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 81: What should moderators do during lockout wave 81?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 81, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 82: What should moderators do during lockout wave 82?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 82, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 83: What should moderators do during lockout wave 83?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 83, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 84: What should moderators do during lockout wave 84?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 84, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 85: What should moderators do during lockout wave 85?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 85, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 86: What should moderators do during lockout wave 86?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 86, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 87: What should moderators do during lockout wave 87?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 87, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 88: What should moderators do during lockout wave 88?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 88, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 89: What should moderators do during lockout wave 89?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 89, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 90: What should moderators do during lockout wave 90?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 90, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 91: What should moderators do during lockout wave 91?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 91, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 92: What should moderators do during lockout wave 92?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 92, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 93: What should moderators do during lockout wave 93?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 93, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 94: What should moderators do during lockout wave 94?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 94, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 95: What should moderators do during lockout wave 95?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 95, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 96: What should moderators do during lockout wave 96?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 96, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 97: What should moderators do during lockout wave 97?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 97, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 98: What should moderators do during lockout wave 98?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 98, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 99: What should moderators do during lockout wave 99?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 99, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 100: What should moderators do during lockout wave 100?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 100, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 101: What should moderators do during lockout wave 101?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 101, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 102: What should moderators do during lockout wave 102?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 102, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 103: What should moderators do during lockout wave 103?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 103, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 104: What should moderators do during lockout wave 104?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 104, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 105: What should moderators do during lockout wave 105?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 105, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 106: What should moderators do during lockout wave 106?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 106, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 107: What should moderators do during lockout wave 107?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 107, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 108: What should moderators do during lockout wave 108?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 108, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 109: What should moderators do during lockout wave 109?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 109, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 110: What should moderators do during lockout wave 110?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 110, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 111: What should moderators do during lockout wave 111?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 111, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 112: What should moderators do during lockout wave 112?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 112, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 113: What should moderators do during lockout wave 113?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 113, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 114: What should moderators do during lockout wave 114?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 114, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 115: What should moderators do during lockout wave 115?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 115, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 116: What should moderators do during lockout wave 116?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 116, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 117: What should moderators do during lockout wave 117?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 117, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 118: What should moderators do during lockout wave 118?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 118, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 119: What should moderators do during lockout wave 119?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 119, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 120: What should moderators do during lockout wave 120?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 120, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 121: What should moderators do during lockout wave 121?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 121, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 122: What should moderators do during lockout wave 122?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 122, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 123: What should moderators do during lockout wave 123?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 123, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 124: What should moderators do during lockout wave 124?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 124, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 125: What should moderators do during lockout wave 125?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 125, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 126: What should moderators do during lockout wave 126?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 126, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 127: What should moderators do during lockout wave 127?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 127, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 128: What should moderators do during lockout wave 128?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 128, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 129: What should moderators do during lockout wave 129?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 129, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 130: What should moderators do during lockout wave 130?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 130, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 131: What should moderators do during lockout wave 131?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 131, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 132: What should moderators do during lockout wave 132?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 132, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 133: What should moderators do during lockout wave 133?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 133, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 134: What should moderators do during lockout wave 134?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 134, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 135: What should moderators do during lockout wave 135?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 135, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 136: What should moderators do during lockout wave 136?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 136, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 137: What should moderators do during lockout wave 137?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 137, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 138: What should moderators do during lockout wave 138?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 138, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 139: What should moderators do during lockout wave 139?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 139, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 140: What should moderators do during lockout wave 140?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 140, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 141: What should moderators do during lockout wave 141?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 141, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 142: What should moderators do during lockout wave 142?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 142, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 143: What should moderators do during lockout wave 143?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 143, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 144: What should moderators do during lockout wave 144?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 144, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 145: What should moderators do during lockout wave 145?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 145, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 146: What should moderators do during lockout wave 146?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 146, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 147: What should moderators do during lockout wave 147?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 147, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 148: What should moderators do during lockout wave 148?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 148, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 149: What should moderators do during lockout wave 149?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 149, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 150: What should moderators do during lockout wave 150?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 150, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 151: What should moderators do during lockout wave 151?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 151, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 152: What should moderators do during lockout wave 152?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 152, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 153: What should moderators do during lockout wave 153?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 153, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 154: What should moderators do during lockout wave 154?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 154, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 155: What should moderators do during lockout wave 155?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 155, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 156: What should moderators do during lockout wave 156?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 156, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 157: What should moderators do during lockout wave 157?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 157, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 158: What should moderators do during lockout wave 158?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 158, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 159: What should moderators do during lockout wave 159?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 159, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 160: What should moderators do during lockout wave 160?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 160, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 161: What should moderators do during lockout wave 161?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 161, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 162: What should moderators do during lockout wave 162?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 162, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 163: What should moderators do during lockout wave 163?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 163, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 164: What should moderators do during lockout wave 164?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 164, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 165: What should moderators do during lockout wave 165?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 165, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 166: What should moderators do during lockout wave 166?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 166, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 167: What should moderators do during lockout wave 167?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 167, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 168: What should moderators do during lockout wave 168?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 168, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 169: What should moderators do during lockout wave 169?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 169, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 170: What should moderators do during lockout wave 170?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 170, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 171: What should moderators do during lockout wave 171?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 171, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 172: What should moderators do during lockout wave 172?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 172, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 173: What should moderators do during lockout wave 173?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 173, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 174: What should moderators do during lockout wave 174?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 174, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 175: What should moderators do during lockout wave 175?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 175, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 176: What should moderators do during lockout wave 176?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 176, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 177: What should moderators do during lockout wave 177?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 177, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 178: What should moderators do during lockout wave 178?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 178, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 179: What should moderators do during lockout wave 179?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 179, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Login Policy 180: What should moderators do during lockout wave 180?</span>
+                            <span>+</span>
+                        </div>
+                        <div class="faq-answer">
+                            For policy 180, confirm account ownership, check recent IP reputation, validate last successful MFA challenge, and escalate to security if score exceeds threshold.
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+    <script src="script.js"></script>
 </body>
-
 </html>

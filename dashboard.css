@@ -66,6 +66,19 @@
     margin-bottom: 2rem;
 }
 
+.plan-banner {
+    margin-bottom: 1.5rem;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(220, 38, 38, 0.08);
+    color: #fca5a5;
+}
+
+.plan-banner strong {
+    color: #fecaca;
+}
+
 .user-menu {
     display: flex;
     align-items: center;
