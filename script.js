@@ -78,6 +78,43 @@ function initPlanSelection() {
     });
 }
 
+function initPricingCardAnimation() {
+    const pricingCards = qsa(".pricing-card");
+    if (!pricingCards.length) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const pointerHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+    if (reduceMotion || !pointerHover) return;
+
+    pricingCards.forEach((card) => {
+        const blob = card.querySelector(".blob");
+        const fakeblob = card.querySelector(".fakeblob");
+
+        if (!(blob instanceof HTMLElement) || !(fakeblob instanceof HTMLElement)) return;
+
+        card.addEventListener("pointermove", (event) => {
+            const rec = fakeblob.getBoundingClientRect();
+            const x = event.clientX - rec.left - blob.offsetWidth / 2;
+            const y = event.clientY - rec.top - blob.offsetHeight / 2;
+
+            blob.animate(
+                [{ transform: `translate(${x}px, ${y}px)` }],
+                {
+                    duration: 300,
+                    fill: "forwards"
+                }
+            );
+
+            blob.style.opacity = "1";
+        });
+
+        card.addEventListener("pointerleave", () => {
+            blob.style.opacity = "";
+        });
+    });
+}
+
 function initLoginPage() {
     const form = qs("#login-form");
     if (!form) return;
@@ -199,6 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initMobileNav();
     initFaq();
     initPlanSelection();
+    initPricingCardAnimation();
     initLoginPage();
     initDashboardPage();
 });
