@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radon - Roblox Anti-Cheat</title>
-    <meta name="theme-color" content="#101318">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%23e11d48' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <meta name="theme-color" content="#ffd8e8">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%23d63f75' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="home-page">
     <header class="site-header">
         <div class="container nav-wrap">
             <a class="brand" href="index.html" aria-label="Radon home">
@@ -37,18 +37,59 @@
 
     <main>
         <section class="hero container">
-            <p class="eyebrow">Server-side anti-cheat for Roblox</p>
-            <h1>Keep gameplay fair with clear, reliable server checks.</h1>
-            <p class="hero-copy">Radon validates movement, remote activity, and action state so exploit attempts are stopped early and logged clearly.</p>
-            <div class="hero-actions">
-                <a class="btn btn-primary" href="#pricing">Start Free Trial</a>
-                <a class="btn btn-ghost" href="dashboard.html">View Dashboard</a>
+            <div class="hero-shell">
+                <div class="hero-main">
+                    <div class="hero-icon-build" aria-hidden="true">
+                        <svg class="hero-icon-build-svg" viewBox="0 0 200 200" width="138" height="138">
+                            <path class="build-segment segment-1" d="M100 30 L60 70"></path>
+                            <path class="build-segment segment-2" d="M60 70 L65 130"></path>
+                            <path class="build-segment segment-3" d="M65 130 L100 165"></path>
+                            <path class="build-segment segment-4" d="M100 165 L135 130"></path>
+                            <path class="build-segment segment-5" d="M135 130 L140 70"></path>
+                            <path class="build-segment segment-6" d="M140 70 L100 30"></path>
+                            <path class="build-core" d="M100 52 L78 78 L81 122 L100 142 L119 122 L122 78 Z"></path>
+                        </svg>
+                        <span class="petal petal-a"></span>
+                        <span class="petal petal-b"></span>
+                        <span class="petal petal-c"></span>
+                    </div>
+
+                    <p class="eyebrow">Server-side anti-cheat for Roblox</p>
+                    <h1>Keep gameplay fair with clear, reliable server checks.</h1>
+                    <p class="hero-copy">Radon validates movement, remote activity, and action state so exploit attempts are stopped early and logged clearly.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="#pricing">Start Free Trial</a>
+                        <a class="btn btn-ghost" href="dashboard.html">View Dashboard</a>
+                    </div>
+                    <ul class="hero-points">
+                        <li>Movement and teleport checks</li>
+                        <li>Remote spam protection</li>
+                        <li>Clean moderation evidence</li>
+                    </ul>
+                </div>
+
+                <aside class="hero-panel card" aria-label="Live trust snapshot">
+                    <p class="hero-panel-title">Live Trust Snapshot</p>
+                    <div class="hero-panel-grid">
+                        <article>
+                            <p class="hero-metric-label">Sessions scanned</p>
+                            <p class="hero-metric-value">8.1M</p>
+                        </article>
+                        <article>
+                            <p class="hero-metric-label">Blocked spikes</p>
+                            <p class="hero-metric-value">12.4K</p>
+                        </article>
+                        <article>
+                            <p class="hero-metric-label">Latency overhead</p>
+                            <p class="hero-metric-value">&lt; 0.8%</p>
+                        </article>
+                    </div>
+                    <div class="hero-panel-rail">
+                        <span>Threat confidence</span>
+                        <strong>99.8%</strong>
+                    </div>
+                </aside>
             </div>
-            <ul class="hero-points">
-                <li>Movement and teleport checks</li>
-                <li>Remote spam protection</li>
-                <li>Clean moderation evidence</li>
-            </ul>
         </section>
 
         <section id="features" class="section container">
