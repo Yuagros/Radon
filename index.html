@@ -8,7 +8,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%23e11d48' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="landing-page">
     <header class="site-header">
         <div class="container nav-wrap">
             <a class="brand" href="index.html" aria-label="Radon home">
@@ -37,45 +37,74 @@
 
     <main>
         <section class="hero container">
-            <p class="eyebrow">Server-side anti-cheat for Roblox</p>
-            <h1>Stop exploit patterns before they become player reports.</h1>
-            <p class="hero-copy">Radon validates movement, action budgets, and sensitive events on the server so your moderation team can act on clean evidence.</p>
-            <div class="hero-actions">
+            <div class="hero-orb hero-orb-a" aria-hidden="true"></div>
+            <div class="hero-orb hero-orb-b" aria-hidden="true"></div>
+            <p class="eyebrow reveal reveal-up">Server-side anti-cheat for Roblox</p>
+            <h1 class="reveal reveal-up delay-1">Stop <span class="animate-charcter">exploit patterns</span> before they become player reports.</h1>
+            <p class="hero-copy reveal reveal-up delay-2">Radon validates movement, action budgets, and sensitive events on the server so your moderation team can act on clean evidence.</p>
+            <div class="hero-actions reveal reveal-up delay-3">
                 <a class="btn btn-primary" href="#pricing">Start Free Trial</a>
                 <a class="btn btn-ghost" href="dashboard.html">View Dashboard</a>
             </div>
         </section>
 
         <section id="features" class="section container">
-            <div class="section-head">
-                <h2>What you get</h2>
+            <div class="section-head reveal reveal-up">
+                <h2 class="animate-charcter">What you get</h2>
                 <p class="muted">Focused tools for real moderation workflows.</p>
             </div>
 
             <div class="card-grid three-up">
-                <article class="card">
-                    <h3>Movement Validation</h3>
-                    <p class="muted">Detect speed, teleport, and noclip behaviors with server authoritative checks.</p>
+                <article class="card feature-card animate-blob-card tone-rose reveal reveal-left">
+                    <div class="feature-card-inner">
+                        <span class="feature-icon" aria-hidden="true">
+                            <svg viewBox="0 0 384 512">
+                                <path d="M384 121.94V128H256V0h6.06c6.36 0 12.47 2.53 16.97 7.03l97.94 97.94a24 24 0 0 1 7.03 16.97zM248 160c-13.2 0-24-10.8-24-24V0H24C10.75 0 0 10.75 0 24v464c0 13.25 10.75 24 24 24h336c13.25 0 24-10.75 24-24V160H248z"></path>
+                            </svg>
+                        </span>
+                        <h3>Movement Validation</h3>
+                        <p class="muted">Detect speed, teleport, and noclip behaviors with server authoritative checks.</p>
+                    </div>
+                    <div class="blob" aria-hidden="true"></div>
+                    <div class="fakeblob" aria-hidden="true"></div>
                 </article>
-                <article class="card">
-                    <h3>Action Rate Limits</h3>
-                    <p class="muted">Prevent remote spam and suspicious repeat actions with per-context thresholds.</p>
+                <article class="card feature-card animate-blob-card tone-cyan reveal reveal-up delay-1">
+                    <div class="feature-card-inner">
+                        <span class="feature-icon" aria-hidden="true">
+                            <svg viewBox="0 0 640 512">
+                                <path d="M434.7 64h-85.9c-8 0-15.7 3-21.6 8.4l-98.3 90c-16.6 15.6-16.3 40.5-2.1 56 12.7 13.9 39.4 17.6 56.1 2.7l79.9-73.2c6.5-5.9 16.7-5.5 22.6 1 6 6.5 5.5 16.6-1 22.6l-26.1 23.9L504 313.8c13.7 11.1 15.8 31.3 4.6 45.1l-9.5 11.7c-11.1 13.8-31.3 15.9-45 4.7l-5.4-4.4-31.4 38.6c-13 15.9-36.4 18.4-52.3 5.4l-17.9-15.5c-22.3 27.4-62.6 31.6-90 9.3L146.3 352H128V128l54.7-54.6c6-6 14.1-9.4 22.6-9.4h83.8l-81.8 74.9c-29.2 26.8-31.3 72.3-4.4 101.7 26.5 28.9 72 31.5 101.7 4.4l30-27.5 149.3 121.2z"></path>
+                            </svg>
+                        </span>
+                        <h3>Action Rate Limits</h3>
+                        <p class="muted">Prevent remote spam and suspicious repeat actions with per-context thresholds.</p>
+                    </div>
+                    <div class="blob" aria-hidden="true"></div>
+                    <div class="fakeblob" aria-hidden="true"></div>
                 </article>
-                <article class="card">
-                    <h3>Evidence Logs</h3>
-                    <p class="muted">Capture clear detection details so your moderators can review and enforce fast.</p>
+                <article class="card feature-card animate-blob-card tone-amber reveal reveal-right delay-2">
+                    <div class="feature-card-inner">
+                        <span class="feature-icon" aria-hidden="true">
+                            <svg viewBox="0 0 512 512">
+                                <path d="M192 208c0-17.67-14.33-32-32-32h-16c-35.35 0-64 28.65-64 64v48c0 35.35 28.65 64 64 64h16c17.67 0 32-14.33 32-32V208zm176 144c35.35 0 64-28.65 64-64v-48c0-35.35-28.65-64-64-64h-16c-17.67 0-32 14.33-32 32v112c0 17.67 14.33 32 32 32h16zM256 0C113.18 0 4.58 118.83 0 256v16c0 8.84 7.16 16 16 16h16c8.84 0 16-7.16 16-16v-16c0-114.69 93.31-208 208-208s208 93.31 208 208v165.72c0 23.35-18.93 42.28-42.28 42.28H320c0-26.51-21.49-48-48-48h-32c-26.51 0-48 21.49-48 48s21.49 48 48 48h181.72c49.86 0 90.28-40.42 90.28-90.28V256C507.42 118.83 398.82 0 256 0z"></path>
+                            </svg>
+                        </span>
+                        <h3>Evidence Logs</h3>
+                        <p class="muted">Capture clear detection details so your moderators can review and enforce fast.</p>
+                    </div>
+                    <div class="blob" aria-hidden="true"></div>
+                    <div class="fakeblob" aria-hidden="true"></div>
                 </article>
             </div>
         </section>
 
-        <section id="pricing" class="section container">
-            <div class="section-head">
-                <h2>Simple pricing</h2>
+        <section id="pricing" class="section container pricing-section">
+            <div class="section-head reveal reveal-up">
+                <h2 class="animate-charcter">Simple pricing</h2>
                 <p class="muted">Pick a plan, sign in, and start from the dashboard.</p>
             </div>
 
             <div class="card-grid three-up">
-                <article class="card pricing-card">
+                <article class="card pricing-card animate-blob-card tone-rose reveal reveal-left">
                     <div class="pricing-card-inner">
                         <h3>Starter</h3>
                         <p class="price">$19<span>/mo</span></p>
@@ -90,7 +119,7 @@
                     <div class="fakeblob" aria-hidden="true"></div>
                 </article>
 
-                <article class="card pricing-card featured">
+                <article class="card pricing-card featured animate-blob-card tone-rose reveal reveal-up delay-1">
                     <div class="pricing-card-inner">
                         <p class="pricing-pill">Most Popular</p>
                         <h3>Pro</h3>
@@ -106,7 +135,7 @@
                     <div class="fakeblob" aria-hidden="true"></div>
                 </article>
 
-                <article class="card pricing-card">
+                <article class="card pricing-card animate-blob-card tone-rose reveal reveal-right delay-2">
                     <div class="pricing-card-inner">
                         <h3>Enterprise</h3>
                         <p class="price">$149<span>/mo</span></p>
@@ -124,30 +153,30 @@
         </section>
 
         <section id="faq" class="section container">
-            <div class="section-head">
-                <h2>FAQ</h2>
+            <div class="section-head reveal reveal-up">
+                <h2 class="animate-charcter">FAQ</h2>
             </div>
 
-            <article class="faq-item">
-                <button class="faq-question" type="button">
+            <article class="faq-item reveal reveal-up">
+                <button class="faq-question" type="button" aria-expanded="false">
                     <span>Does Radon run server-side?</span>
-                    <span>+</span>
+                    <span class="faq-symbol">+</span>
                 </button>
                 <p class="faq-answer">Yes. Core validation and enforcement signals are generated on the server.</p>
             </article>
 
-            <article class="faq-item">
-                <button class="faq-question" type="button">
+            <article class="faq-item reveal reveal-up delay-1">
+                <button class="faq-question" type="button" aria-expanded="false">
                     <span>Can I tune thresholds?</span>
-                    <span>+</span>
+                    <span class="faq-symbol">+</span>
                 </button>
                 <p class="faq-answer">Yes. You can tune rule sensitivity and moderation actions per environment.</p>
             </article>
 
-            <article class="faq-item">
-                <button class="faq-question" type="button">
+            <article class="faq-item reveal reveal-up delay-2">
+                <button class="faq-question" type="button" aria-expanded="false">
                     <span>Will it hurt performance?</span>
-                    <span>+</span>
+                    <span class="faq-symbol">+</span>
                 </button>
                 <p class="faq-answer">The checks are designed to stay lightweight and avoid client-side overhead.</p>
             </article>

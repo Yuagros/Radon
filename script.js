@@ -63,7 +63,10 @@ function initFaq() {
         if (!question || !answer) return;
 
         question.addEventListener("click", () => {
-            answer.style.maxHeight = answer.style.maxHeight ? "" : answer.scrollHeight + "px";
+            const isOpen = item.classList.contains("open");
+            item.classList.toggle("open", !isOpen);
+            question.setAttribute("aria-expanded", String(!isOpen));
+            answer.style.maxHeight = isOpen ? "" : answer.scrollHeight + "px";
         });
     });
 }
@@ -78,16 +81,16 @@ function initPlanSelection() {
     });
 }
 
-function initPricingCardAnimation() {
-    const pricingCards = qsa(".pricing-card");
-    if (!pricingCards.length) return;
+function initBlobCardAnimation() {
+    const cards = qsa(".animate-blob-card");
+    if (!cards.length) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const pointerHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
     if (reduceMotion || !pointerHover) return;
 
-    pricingCards.forEach((card) => {
+    cards.forEach((card) => {
         const blob = card.querySelector(".blob");
         const fakeblob = card.querySelector(".fakeblob");
 
@@ -113,6 +116,44 @@ function initPricingCardAnimation() {
             blob.style.opacity = "";
         });
     });
+}
+
+function initRevealAnimations() {
+    const revealItems = qsa(".reveal");
+    if (!revealItems.length) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || !("IntersectionObserver" in window)) return;
+
+    document.body.classList.add("motion-ready");
+
+    const observer = new IntersectionObserver(
+        (entries, obs) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("revealed");
+                obs.unobserve(entry.target);
+            });
+        },
+        {
+            threshold: 0.16,
+            rootMargin: "0px 0px -8% 0px"
+        }
+    );
+
+    revealItems.forEach((item) => observer.observe(item));
+}
+
+function initStickyHeaderState() {
+    const header = qs(".site-header");
+    if (!header) return;
+
+    const sync = () => {
+        header.classList.toggle("scrolled", window.scrollY > 10);
+    };
+
+    sync();
+    window.addEventListener("scroll", sync, { passive: true });
 }
 
 function initLoginPage() {
@@ -234,9 +275,11 @@ function initDashboardPage() {
 
 document.addEventListener("DOMContentLoaded", () => {
     initMobileNav();
+    initStickyHeaderState();
+    initRevealAnimations();
     initFaq();
     initPlanSelection();
-    initPricingCardAnimation();
+    initBlobCardAnimation();
     initLoginPage();
     initDashboardPage();
 });
