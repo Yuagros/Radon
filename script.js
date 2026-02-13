@@ -3,8 +3,19 @@ const STORAGE_KEYS = {
     auth: "radon_auth",
     rememberedEmail: "radon_remembered_email",
     accounts: "radon_accounts",
-    cryptoConfig: "radon_crypto_config",
     cryptoRequests: "radon_crypto_requests"
+};
+
+const CRYPTO_WALLETS = {
+    ETH: "0x9D575B4e92063BD6FA3e5b478Fa5EBFc8d531241",
+    BTC: "bc1qlluym8r3tr3cql9eatng7ydy050d526m8g9e4n",
+    SOL: "7ykaKV7RtPnHpckJBH5p3rxmSdAP1Z2598BmbqeuHK7Y"
+};
+
+const CRYPTO_NETWORKS = {
+    ETH: "Ethereum mainnet",
+    BTC: "Bitcoin mainnet",
+    SOL: "Solana mainnet"
 };
 
 function qs(selector) {
@@ -371,21 +382,6 @@ function initDashboardTabs() {
     setActiveTab(validTargets.has(initialHash) ? initialHash : defaultTab, false);
 }
 
-function readCryptoConfig() {
-    const defaults = {
-        provider: "manual",
-        endpoint: "",
-        apiKey: ""
-    };
-    const value = safeReadJson(STORAGE_KEYS.cryptoConfig, defaults);
-    if (!value || typeof value !== "object") return defaults;
-    return {
-        provider: String(value.provider || defaults.provider),
-        endpoint: String(value.endpoint || defaults.endpoint),
-        apiKey: String(value.apiKey || defaults.apiKey)
-    };
-}
-
 function storeCryptoRequest(payload) {
     const requests = safeReadJson(STORAGE_KEYS.cryptoRequests, []);
     const safeRequests = Array.isArray(requests) ? requests : [];
@@ -393,26 +389,89 @@ function storeCryptoRequest(payload) {
     safeWriteJson(STORAGE_KEYS.cryptoRequests, safeRequests.slice(0, 30));
 }
 
-function initCryptoPayments(auth) {
-    const configForm = qs("#crypto-config-form");
-    const checkoutForm = qs("#crypto-checkout-form");
-    if (!configForm || !checkoutForm) return;
+async function copyToClipboard(text) {
+    if (!text) return false;
 
-    const providerNameInput = qs("#provider-name");
-    const providerEndpointInput = qs("#provider-endpoint");
-    const providerApiKeyInput = qs("#provider-api-key");
-    const configStatus = qs("#crypto-config-status");
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch (error) {
+        /* fallback below */
+    }
+
+    try {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        temp.setAttribute("readonly", "");
+        temp.style.position = "absolute";
+        temp.style.left = "-9999px";
+        document.body.appendChild(temp);
+        temp.select();
+        const copied = document.execCommand("copy");
+        document.body.removeChild(temp);
+        return copied;
+    } catch (error) {
+        return false;
+    }
+}
+
+function getWalletUri(coin, wallet) {
+    if (!wallet) return "";
+    if (coin === "ETH") return "ethereum:" + wallet;
+    if (coin === "BTC") return "bitcoin:" + wallet;
+    if (coin === "SOL") return "solana:" + wallet;
+    return "";
+}
+
+function initCryptoPayments(auth) {
+    const checkoutForm = qs("#crypto-checkout-form");
+    if (!checkoutForm) return;
 
     const cryptoPlanInput = qs("#crypto-plan");
     const cryptoAmountInput = qs("#crypto-amount");
     const cryptoCoinInput = qs("#crypto-coin");
     const cryptoWalletInput = qs("#crypto-wallet");
+    const copyWalletButton = qs("#copy-wallet-btn");
+    const walletPayLink = qs("#wallet-pay-link");
+    const networkNote = qs("#crypto-network-note");
+    const txHashInput = qs("#crypto-txhash");
     const cryptoStatus = qs("#crypto-status");
+    const walletCopyStatus = qs("#wallet-copy-status");
 
-    const saved = readCryptoConfig();
-    if (providerNameInput instanceof HTMLSelectElement) providerNameInput.value = saved.provider;
-    if (providerEndpointInput instanceof HTMLInputElement) providerEndpointInput.value = saved.endpoint;
-    if (providerApiKeyInput instanceof HTMLInputElement) providerApiKeyInput.value = saved.apiKey;
+    function setCheckoutStatus(message, isError) {
+        if (!cryptoStatus) return;
+        cryptoStatus.textContent = message;
+        cryptoStatus.style.color = isError ? "#fb7185" : "";
+    }
+
+    function setWalletCopyStatus(message, isError) {
+        if (!walletCopyStatus) return;
+        walletCopyStatus.textContent = message;
+        walletCopyStatus.style.color = isError ? "#fb7185" : "";
+    }
+
+    function syncSelectedWallet() {
+        const coin = cryptoCoinInput instanceof HTMLSelectElement ? cryptoCoinInput.value : "ETH";
+        const wallet = CRYPTO_WALLETS[coin] || "";
+
+        if (cryptoWalletInput instanceof HTMLInputElement) {
+            cryptoWalletInput.value = wallet;
+        }
+
+        if (networkNote) {
+            networkNote.textContent = wallet
+                ? "Send " + coin + " on " + (CRYPTO_NETWORKS[coin] || "the correct network") + "."
+                : "No receiving wallet configured for this coin.";
+        }
+
+        if (walletPayLink) {
+            const uri = getWalletUri(coin, wallet);
+            walletPayLink.href = uri || "#";
+            walletPayLink.classList.toggle("disabled-link", !uri);
+        }
+    }
 
     if (cryptoPlanInput instanceof HTMLSelectElement) {
         cryptoPlanInput.value = auth.plan || getSelectedPlan();
@@ -436,90 +495,74 @@ function initCryptoPayments(auth) {
         });
     }
 
-    configForm.addEventListener("submit", (event) => {
-        event.preventDefault();
+    if (cryptoCoinInput instanceof HTMLSelectElement) {
+        cryptoCoinInput.addEventListener("change", () => {
+            syncSelectedWallet();
+            setCheckoutStatus("", false);
+        });
+    }
 
-        const config = {
-            provider: providerNameInput instanceof HTMLSelectElement ? providerNameInput.value : "manual",
-            endpoint: providerEndpointInput instanceof HTMLInputElement ? providerEndpointInput.value.trim() : "",
-            apiKey: providerApiKeyInput instanceof HTMLInputElement ? providerApiKeyInput.value.trim() : ""
-        };
+    if (copyWalletButton) {
+        copyWalletButton.addEventListener("click", async () => {
+            const wallet = cryptoWalletInput instanceof HTMLInputElement ? cryptoWalletInput.value.trim() : "";
+            const copied = await copyToClipboard(wallet);
+            setCheckoutStatus(copied ? "Wallet address copied." : "Could not copy wallet address.", !copied);
+        });
+    }
 
-        safeWriteJson(STORAGE_KEYS.cryptoConfig, config);
-        if (configStatus) {
-            configStatus.textContent = "Payment settings saved.";
-        }
+    qsa("[data-copy-wallet-symbol]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const coin = button.getAttribute("data-copy-wallet-symbol");
+            const wallet = coin ? CRYPTO_WALLETS[coin] : "";
+            const copied = await copyToClipboard(wallet);
+            setWalletCopyStatus(
+                copied ? coin + " wallet copied." : "Could not copy " + coin + " wallet.",
+                !copied
+            );
+        });
     });
 
-    checkoutForm.addEventListener("submit", async (event) => {
+    syncSelectedWallet();
+
+    checkoutForm.addEventListener("submit", (event) => {
         event.preventDefault();
 
         const plan = cryptoPlanInput instanceof HTMLSelectElement ? cryptoPlanInput.value : "";
-        const amount = cryptoAmountInput instanceof HTMLInputElement ? cryptoAmountInput.value.trim() : "";
+        const amount = cryptoAmountInput instanceof HTMLInputElement ? Number(cryptoAmountInput.value.trim()) : NaN;
         const coin = cryptoCoinInput instanceof HTMLSelectElement ? cryptoCoinInput.value : "";
         const wallet = cryptoWalletInput instanceof HTMLInputElement ? cryptoWalletInput.value.trim() : "";
+        const txHash = txHashInput instanceof HTMLInputElement ? txHashInput.value.trim() : "";
 
-        if (!plan || !amount || !coin || !wallet) {
-            if (cryptoStatus) cryptoStatus.textContent = "Fill all payment fields first.";
+        if (!plan || !coin || !wallet || !txHash || !Number.isFinite(amount) || amount <= 0) {
+            setCheckoutStatus("Complete all fields before submitting payment.", true);
             return;
         }
 
-        const config = readCryptoConfig();
-        const reference = "RADON-" + Date.now().toString(36).toUpperCase();
+        const reference = "PAY-" + Date.now().toString(36).toUpperCase();
         const payload = {
             reference,
             accountEmail: auth.email,
             plan,
-            amountUsd: Number(amount),
+            amountUsd: amount,
             coin,
             wallet,
-            provider: config.provider,
+            txHash,
+            status: "pending_verification",
             createdAt: new Date().toISOString()
         };
 
         storeCryptoRequest(payload);
 
-        if (config.provider === "custom" && config.endpoint) {
-            try {
-                if (cryptoStatus) cryptoStatus.textContent = "Submitting to provider...";
-                const headers = {
-                    "Content-Type": "application/json"
-                };
-                if (config.apiKey) {
-                    headers.Authorization = "Bearer " + config.apiKey;
-                }
-
-                const response = await fetch(config.endpoint, {
-                    method: "POST",
-                    headers,
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error("Provider returned " + response.status);
-                }
-
-                if (cryptoStatus) {
-                    cryptoStatus.textContent = "Payment request sent. Reference: " + reference;
-                }
-                return;
-            } catch (error) {
-                if (cryptoStatus) {
-                    cryptoStatus.textContent =
-                        "Request saved locally as " +
-                        reference +
-                        ". Provider call failed. Check endpoint/key and try again.";
-                }
-                return;
-            }
+        if (txHashInput instanceof HTMLInputElement) {
+            txHashInput.value = "";
         }
 
-        if (cryptoStatus) {
-            cryptoStatus.textContent =
-                "Payment request " +
+        setCheckoutStatus(
+            "Payment submitted as " +
                 reference +
-                " created in local mode. Share provider API details and I will wire live checkout.";
-        }
+                ". Status: pending verification.",
+            false
+        );
     });
 }
 

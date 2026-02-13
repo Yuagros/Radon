@@ -80,7 +80,7 @@
                 <article class="card panel-card">
                     <div class="panel-head">
                         <h2>Crypto payments</h2>
-                        <p class="muted">Create payment requests and connect your crypto provider.</p>
+                        <p class="muted">Send payment to your configured wallets, then submit the transaction hash for review.</p>
                     </div>
 
                     <form id="crypto-checkout-form" class="form-grid" novalidate>
@@ -96,17 +96,23 @@
 
                         <label class="form-label" for="crypto-coin">Coin</label>
                         <select class="form-input" id="crypto-coin" required>
-                            <option value="USDT">USDT</option>
-                            <option value="USDC">USDC</option>
-                            <option value="BTC">BTC</option>
                             <option value="ETH">ETH</option>
-                            <option value="LTC">LTC</option>
+                            <option value="BTC">BTC</option>
+                            <option value="SOL">SOL</option>
                         </select>
 
-                        <label class="form-label" for="crypto-wallet">Payout wallet/address</label>
-                        <input class="form-input" type="text" id="crypto-wallet" placeholder="Paste destination wallet" required>
+                        <label class="form-label" for="crypto-wallet">Send to wallet address</label>
+                        <div class="wallet-row">
+                            <input class="form-input" type="text" id="crypto-wallet" readonly aria-readonly="true">
+                            <button class="btn btn-ghost" type="button" id="copy-wallet-btn">Copy</button>
+                        </div>
+                        <p class="muted inline-note" id="crypto-network-note"></p>
+                        <a class="btn btn-ghost wallet-link-btn" id="wallet-pay-link" href="#" target="_blank" rel="noopener">Open in wallet</a>
 
-                        <button class="btn btn-primary" type="submit">Create payment request</button>
+                        <label class="form-label" for="crypto-txhash">Transaction hash</label>
+                        <input class="form-input" type="text" id="crypto-txhash" placeholder="Paste blockchain transaction hash" required>
+
+                        <button class="btn btn-primary" type="submit">I sent payment</button>
                         <p class="muted crypto-status" id="crypto-status" aria-live="polite"></p>
                     </form>
                 </article>
@@ -115,28 +121,28 @@
             <section class="dash-panel" data-tab-panel="settings" hidden>
                 <article class="card panel-card">
                     <div class="panel-head">
-                        <h2>Payment integration settings</h2>
-                        <p class="muted">Save your provider details here. Share your API details and I will wire this end-to-end for your gateway.</p>
+                        <h2>Receiving wallets</h2>
+                        <p class="muted">These are the active addresses used by checkout.</p>
                     </div>
 
-                    <form id="crypto-config-form" class="form-grid" novalidate>
-                        <label class="form-label" for="provider-name">Provider</label>
-                        <select class="form-input" id="provider-name">
-                            <option value="manual">Manual wallet mode</option>
-                            <option value="custom">Custom API endpoint</option>
-                            <option value="nowpayments">NOWPayments-compatible</option>
-                            <option value="coinbase">Coinbase Commerce-compatible</option>
-                        </select>
-
-                        <label class="form-label" for="provider-endpoint">API endpoint URL</label>
-                        <input class="form-input" type="url" id="provider-endpoint" placeholder="https://api.your-provider.com/checkout">
-
-                        <label class="form-label" for="provider-api-key">API key / token</label>
-                        <input class="form-input" type="password" id="provider-api-key" placeholder="Optional bearer token">
-
-                        <button class="btn btn-primary" type="submit">Save payment settings</button>
-                        <p class="muted crypto-status" id="crypto-config-status" aria-live="polite"></p>
-                    </form>
+                    <div class="wallet-list">
+                        <div class="wallet-item">
+                            <p class="wallet-symbol">ETH</p>
+                            <code class="wallet-code" id="wallet-eth">0x9D575B4e92063BD6FA3e5b478Fa5EBFc8d531241</code>
+                            <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="ETH">Copy</button>
+                        </div>
+                        <div class="wallet-item">
+                            <p class="wallet-symbol">BTC</p>
+                            <code class="wallet-code" id="wallet-btc">bc1qlluym8r3tr3cql9eatng7ydy050d526m8g9e4n</code>
+                            <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="BTC">Copy</button>
+                        </div>
+                        <div class="wallet-item">
+                            <p class="wallet-symbol">SOL</p>
+                            <code class="wallet-code" id="wallet-sol">7ykaKV7RtPnHpckJBH5p3rxmSdAP1Z2598BmbqeuHK7Y</code>
+                            <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="SOL">Copy</button>
+                        </div>
+                    </div>
+                    <p class="muted crypto-status" id="wallet-copy-status" aria-live="polite"></p>
                 </article>
             </section>
         </main>

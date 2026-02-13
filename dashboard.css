@@ -147,6 +147,67 @@
     min-width: 220px;
 }
 
+.wallet-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.wallet-row .form-input {
+    flex: 1;
+}
+
+.wallet-row .btn {
+    margin-top: 0;
+    min-width: 90px;
+}
+
+.inline-note {
+    margin-top: 0.15rem;
+}
+
+.wallet-link-btn {
+    margin-top: 0.25rem;
+}
+
+.wallet-link-btn.disabled-link {
+    pointer-events: none;
+    opacity: 0.45;
+}
+
+.wallet-list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.wallet-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #131313;
+    padding: 0.75rem;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.wallet-symbol {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fb7185;
+    letter-spacing: 0.06em;
+}
+
+.wallet-code {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+    color: #e5e5e5;
+}
+
+.wallet-copy-btn {
+    justify-self: start;
+    min-width: 90px;
+}
+
 .crypto-status {
     margin-top: 0.2rem;
     min-height: 1.3rem;
@@ -174,5 +235,10 @@
     .dashboard-header {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .wallet-row {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
