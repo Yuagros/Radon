@@ -81,81 +81,6 @@ function initPlanSelection() {
     });
 }
 
-function initBlobCardAnimation() {
-    const cards = qsa(".animate-blob-card");
-    if (!cards.length) return;
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const pointerHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-
-    if (reduceMotion || !pointerHover) return;
-
-    cards.forEach((card) => {
-        const blob = card.querySelector(".blob");
-        const fakeblob = card.querySelector(".fakeblob");
-
-        if (!(blob instanceof HTMLElement) || !(fakeblob instanceof HTMLElement)) return;
-
-        card.addEventListener("pointermove", (event) => {
-            const rec = fakeblob.getBoundingClientRect();
-            const x = event.clientX - rec.left - blob.offsetWidth / 2;
-            const y = event.clientY - rec.top - blob.offsetHeight / 2;
-
-            blob.animate(
-                [{ transform: `translate(${x}px, ${y}px)` }],
-                {
-                    duration: 300,
-                    fill: "forwards"
-                }
-            );
-
-            blob.style.opacity = "1";
-        });
-
-        card.addEventListener("pointerleave", () => {
-            blob.style.opacity = "";
-        });
-    });
-}
-
-function initRevealAnimations() {
-    const revealItems = qsa(".reveal");
-    if (!revealItems.length) return;
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion || !("IntersectionObserver" in window)) return;
-
-    document.body.classList.add("motion-ready");
-
-    const observer = new IntersectionObserver(
-        (entries, obs) => {
-            entries.forEach((entry) => {
-                if (!entry.isIntersecting) return;
-                entry.target.classList.add("revealed");
-                obs.unobserve(entry.target);
-            });
-        },
-        {
-            threshold: 0.16,
-            rootMargin: "0px 0px -8% 0px"
-        }
-    );
-
-    revealItems.forEach((item) => observer.observe(item));
-}
-
-function initStickyHeaderState() {
-    const header = qs(".site-header");
-    if (!header) return;
-
-    const sync = () => {
-        header.classList.toggle("scrolled", window.scrollY > 10);
-    };
-
-    sync();
-    window.addEventListener("scroll", sync, { passive: true });
-}
-
 function initLoginPage() {
     const form = qs("#login-form");
     if (!form) return;
@@ -275,11 +200,8 @@ function initDashboardPage() {
 
 document.addEventListener("DOMContentLoaded", () => {
     initMobileNav();
-    initStickyHeaderState();
-    initRevealAnimations();
     initFaq();
     initPlanSelection();
-    initBlobCardAnimation();
     initLoginPage();
     initDashboardPage();
 });
