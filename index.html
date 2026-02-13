@@ -26,7 +26,7 @@
 
             <nav class="nav-links" aria-label="Primary">
                 <ul>
-                    <li><a href="#features">Features</a></li>
+                    <li><a href="#features">Tools</a></li>
                     <li><a href="#pricing">Pricing</a></li>
                     <li><a href="#faq">FAQ</a></li>
                     <li><a class="btn btn-ghost" href="login.html">Login</a></li>
@@ -37,34 +37,88 @@
 
     <main>
         <section class="hero container">
-            <p class="eyebrow">Server-side anti-cheat for Roblox</p>
-            <h1>Stop exploit patterns before they become player reports.</h1>
-            <p class="hero-copy">Radon validates movement, action budgets, and sensitive events on the server so your moderation team can act on clean evidence.</p>
-            <div class="hero-actions">
-                <a class="btn btn-primary" href="#pricing">Start Free Trial</a>
-                <a class="btn btn-ghost" href="dashboard.html">View Dashboard</a>
+            <div class="hero-grid">
+                <div class="hero-main">
+                    <p class="eyebrow">Server-side anti-cheat for Roblox</p>
+                    <h1>Stop exploit patterns before they become player reports.</h1>
+                    <p class="hero-copy">Radon validates movement, action budgets, and sensitive events on the server so your moderation team can act on clean evidence.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="#pricing">Start Free Trial</a>
+                        <a class="btn btn-ghost" href="dashboard.html">View Dashboard</a>
+                    </div>
+                </div>
+
+                <aside class="hero-side card" aria-label="Platform highlights">
+                    <h2>What Radon monitors</h2>
+                    <ul class="hero-highlights">
+                        <li><strong>Movement checks</strong><span>speed, teleport, noclip</span></li>
+                        <li><strong>Remote limits</strong><span>spam and burst abuse</span></li>
+                        <li><strong>Event integrity</strong><span>sensitive action validation</span></li>
+                    </ul>
+                </aside>
             </div>
         </section>
 
         <section id="features" class="section container">
             <div class="section-head">
-                <h2>What you get</h2>
-                <p class="muted">Focused tools for real moderation workflows.</p>
+                <h2>Tools and what they block</h2>
+                <p class="muted">Flowing detection lines from your tools to the abuse patterns they stop.</p>
             </div>
 
-            <div class="card-grid three-up">
-                <article class="card feature-card">
-                    <h3>Movement Validation</h3>
-                    <p class="muted">Detect speed, teleport, and noclip behaviors with server authoritative checks.</p>
-                </article>
-                <article class="card feature-card">
-                    <h3>Action Rate Limits</h3>
-                    <p class="muted">Prevent remote spam and suspicious repeat actions with per-context thresholds.</p>
-                </article>
-                <article class="card feature-card">
-                    <h3>Evidence Logs</h3>
-                    <p class="muted">Capture clear detection details so your moderators can review and enforce fast.</p>
-                </article>
+            <div class="flow-map" aria-label="Tool to threat mapping">
+                <div class="flow-col tools-col">
+                    <h3>Your tools</h3>
+                    <article class="flow-item tool-item">
+                        <h4>Movement Validator</h4>
+                        <p>Server checks for positional drift and impossible movement.</p>
+                    </article>
+                    <article class="flow-item tool-item">
+                        <h4>Remote Guard</h4>
+                        <p>Rate limits and payload sanity checks for event spam.</p>
+                    </article>
+                    <article class="flow-item tool-item">
+                        <h4>State Verifier</h4>
+                        <p>Compares action requests against current server authority.</p>
+                    </article>
+                    <article class="flow-item tool-item">
+                        <h4>Evidence Logger</h4>
+                        <p>Structured traces for every flagged sequence.</p>
+                    </article>
+                </div>
+
+                <div class="flow-lines" aria-hidden="true">
+                    <svg viewBox="0 0 260 420" preserveAspectRatio="none">
+                        <path class="flow-track" d="M8 52 C90 52 168 44 252 44"></path>
+                        <path class="flow-track" d="M8 146 C90 146 168 138 252 138"></path>
+                        <path class="flow-track" d="M8 240 C90 240 168 232 252 232"></path>
+                        <path class="flow-track" d="M8 334 C90 334 168 326 252 326"></path>
+
+                        <path class="flow-active" d="M8 52 C90 52 168 44 252 44"></path>
+                        <path class="flow-active delay-1" d="M8 146 C90 146 168 138 252 138"></path>
+                        <path class="flow-active delay-2" d="M8 240 C90 240 168 232 252 232"></path>
+                        <path class="flow-active delay-3" d="M8 334 C90 334 168 326 252 326"></path>
+                    </svg>
+                </div>
+
+                <div class="flow-col blocks-col">
+                    <h3>Blocks</h3>
+                    <article class="flow-item block-item">
+                        <h4>Teleport and speed abuse</h4>
+                        <p>Prevents movement manipulation before it affects gameplay.</p>
+                    </article>
+                    <article class="flow-item block-item">
+                        <h4>Remote spam bursts</h4>
+                        <p>Stops flood attempts and repeated exploit payloads.</p>
+                    </article>
+                    <article class="flow-item block-item">
+                        <h4>Invalid action chains</h4>
+                        <p>Rejects requests that do not match trusted server state.</p>
+                    </article>
+                    <article class="flow-item block-item">
+                        <h4>Silent repeat offenders</h4>
+                        <p>Gives moderation concrete evidence for fast enforcement.</p>
+                    </article>
+                </div>
             </div>
         </section>
 

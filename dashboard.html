@@ -20,11 +20,12 @@
             </a>
 
             <nav class="sidebar-nav" aria-label="Dashboard">
-                <a class="nav-item active" href="#">Overview</a>
-                <a class="nav-item" href="#">Detections</a>
-                <a class="nav-item" href="#">Players</a>
-                <a class="nav-item" href="#">Rulesets</a>
-                <a class="nav-item" href="#">Settings</a>
+                <a class="nav-item active" href="#overview" data-tab-target="overview">Overview</a>
+                <a class="nav-item" href="#detections" data-tab-target="detections">Detections</a>
+                <a class="nav-item" href="#players" data-tab-target="players">Players</a>
+                <a class="nav-item" href="#rulesets" data-tab-target="rulesets">Rulesets</a>
+                <a class="nav-item" href="#billing" data-tab-target="billing">Billing</a>
+                <a class="nav-item" href="#settings" data-tab-target="settings">Settings</a>
             </nav>
 
             <a id="logout-link" class="nav-item logout-link" href="index.html">Logout</a>
@@ -47,76 +48,96 @@
                 <div class="user-chip" id="dashboard-user-email">admin@radon.gg</div>
             </header>
 
-            <section class="stats-grid">
-                <article class="stat-card card">
-                    <p class="muted">Active Players</p>
-                    <h2>1,248</h2>
-                </article>
-                <article class="stat-card card">
-                    <p class="muted">Flags (24h)</p>
-                    <h2>32</h2>
-                </article>
-                <article class="stat-card card">
-                    <p class="muted">Bans Issued</p>
-                    <h2>5</h2>
+            <section class="dash-panel is-active" data-tab-panel="overview">
+                <article class="card panel-card empty-state">
+                    <h2>Overview is currently empty</h2>
+                    <p class="muted">No live metrics yet. Connect your services and data sources to populate this dashboard.</p>
                 </article>
             </section>
 
-            <section class="card table-card">
-                <div class="table-head">
-                    <h3>Recent Detections</h3>
-                </div>
+            <section class="dash-panel" data-tab-panel="detections" hidden>
+                <article class="card panel-card empty-state">
+                    <h2>No detections yet</h2>
+                    <p class="muted">When Radon flags suspicious activity, events will show here.</p>
+                </article>
+            </section>
 
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>Detection</th>
-                                <th>Server</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detections-body">
-                            <tr>
-                                <td>xX_Gam3r_Xx</td>
-                                <td>Speed spike</td>
-                                <td>#8821A</td>
-                                <td class="muted">2 mins ago</td>
-                                <td><span class="status-badge status-banned">Banned</span></td>
-                            </tr>
-                            <tr>
-                                <td>NoobMaster69</td>
-                                <td>Fly pattern</td>
-                                <td>#8821A</td>
-                                <td class="muted">14 mins ago</td>
-                                <td><span class="status-badge status-banned">Banned</span></td>
-                            </tr>
-                            <tr>
-                                <td>Player1234</td>
-                                <td>Suspicious movement</td>
-                                <td>#9912B</td>
-                                <td class="muted">1 hr ago</td>
-                                <td><span class="status-badge status-flagged">Flagged</span></td>
-                            </tr>
-                            <tr>
-                                <td>Guest_991</td>
-                                <td>Noclip vector</td>
-                                <td>#1129C</td>
-                                <td class="muted">3 hrs ago</td>
-                                <td><span class="status-badge status-banned">Banned</span></td>
-                            </tr>
-                            <tr>
-                                <td>ProBuilder</td>
-                                <td>Rate abuse</td>
-                                <td>#2231A</td>
-                                <td class="muted">5 hrs ago</td>
-                                <td><span class="status-badge status-flagged">Flagged</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <section class="dash-panel" data-tab-panel="players" hidden>
+                <article class="card panel-card empty-state">
+                    <h2>No player data yet</h2>
+                    <p class="muted">Player activity and profiles will appear after your first connected server.</p>
+                </article>
+            </section>
+
+            <section class="dash-panel" data-tab-panel="rulesets" hidden>
+                <article class="card panel-card empty-state">
+                    <h2>No rulesets configured</h2>
+                    <p class="muted">Create or import rulesets to begin monitoring behavior patterns.</p>
+                </article>
+            </section>
+
+            <section class="dash-panel" data-tab-panel="billing" hidden>
+                <article class="card panel-card">
+                    <div class="panel-head">
+                        <h2>Crypto payments</h2>
+                        <p class="muted">Create payment requests and connect your crypto provider.</p>
+                    </div>
+
+                    <form id="crypto-checkout-form" class="form-grid" novalidate>
+                        <label class="form-label" for="crypto-plan">Plan</label>
+                        <select class="form-input" id="crypto-plan" required>
+                            <option value="Starter">Starter</option>
+                            <option value="Pro">Pro</option>
+                            <option value="Enterprise">Enterprise</option>
+                        </select>
+
+                        <label class="form-label" for="crypto-amount">Amount (USD)</label>
+                        <input class="form-input" type="number" id="crypto-amount" min="1" step="1" placeholder="99" required>
+
+                        <label class="form-label" for="crypto-coin">Coin</label>
+                        <select class="form-input" id="crypto-coin" required>
+                            <option value="USDT">USDT</option>
+                            <option value="USDC">USDC</option>
+                            <option value="BTC">BTC</option>
+                            <option value="ETH">ETH</option>
+                            <option value="LTC">LTC</option>
+                        </select>
+
+                        <label class="form-label" for="crypto-wallet">Payout wallet/address</label>
+                        <input class="form-input" type="text" id="crypto-wallet" placeholder="Paste destination wallet" required>
+
+                        <button class="btn btn-primary" type="submit">Create payment request</button>
+                        <p class="muted crypto-status" id="crypto-status" aria-live="polite"></p>
+                    </form>
+                </article>
+            </section>
+
+            <section class="dash-panel" data-tab-panel="settings" hidden>
+                <article class="card panel-card">
+                    <div class="panel-head">
+                        <h2>Payment integration settings</h2>
+                        <p class="muted">Save your provider details here. Share your API details and I will wire this end-to-end for your gateway.</p>
+                    </div>
+
+                    <form id="crypto-config-form" class="form-grid" novalidate>
+                        <label class="form-label" for="provider-name">Provider</label>
+                        <select class="form-input" id="provider-name">
+                            <option value="manual">Manual wallet mode</option>
+                            <option value="custom">Custom API endpoint</option>
+                            <option value="nowpayments">NOWPayments-compatible</option>
+                            <option value="coinbase">Coinbase Commerce-compatible</option>
+                        </select>
+
+                        <label class="form-label" for="provider-endpoint">API endpoint URL</label>
+                        <input class="form-input" type="url" id="provider-endpoint" placeholder="https://api.your-provider.com/checkout">
+
+                        <label class="form-label" for="provider-api-key">API key / token</label>
+                        <input class="form-input" type="password" id="provider-api-key" placeholder="Optional bearer token">
+
+                        <button class="btn btn-primary" type="submit">Save payment settings</button>
+                        <p class="muted crypto-status" id="crypto-config-status" aria-live="polite"></p>
+                    </form>
+                </article>
             </section>
         </main>
     </div>
