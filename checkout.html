@@ -31,6 +31,30 @@
 
     <main id="checkout-main" class="checkout-main container">
         <section class="checkout-grid">
+            <article class="card panel-card checkout-auth-gate" id="checkout-auth-gate" hidden aria-hidden="true">
+                <p class="checkout-eyebrow">Secure Checkout</p>
+                <h2>Sign in to continue</h2>
+                <p class="muted">Continue to your Radon dashboard. Selected plan: <strong>Lifetime</strong>.</p>
+                <form id="checkout-auth-form" class="checkout-inline-auth-form" novalidate>
+                    <label class="form-label" for="checkout-auth-email">Email</label>
+                    <input class="form-input" type="email" id="checkout-auth-email" placeholder="name@example.com" required autocomplete="email">
+                    <label class="form-label" for="checkout-auth-password">Password</label>
+                    <input class="form-input" type="password" id="checkout-auth-password" placeholder="********" required autocomplete="current-password">
+                    <label class="check-row muted">
+                        <input type="checkbox" id="checkout-auth-remember">
+                        Remember this email
+                    </label>
+                    <p class="auth-status muted" id="checkout-auth-status" aria-live="polite"></p>
+                    <button class="btn btn-primary btn-full" type="submit" id="checkout-auth-submit">Sign in</button>
+                </form>
+                <p class="muted checkout-auth-links">
+                    <a href="index.html">Back to Home</a>
+                    <span aria-hidden="true"> · </span>
+                    <a href="index.html#pricing">Pricing</a>
+                    <span aria-hidden="true"> · </span>
+                    <a id="checkout-auth-create-link" href="login.html?mode=create">Create account</a>
+                </p>
+            </article>
             <article class="card panel-card checkout-intro-card">
                 <p class="checkout-eyebrow">Secure Checkout</p>
                 <h1>Complete your Radon Lifetime payment</h1>

@@ -1904,6 +1904,18 @@ svg {
     justify-content: flex-end;
 }
 
+.checkout-auth-gate .checkout-inline-auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 1rem;
+}
+
+.checkout-auth-gate .checkout-auth-links {
+    margin-top: 1.25rem;
+    font-size: 0.9rem;
+}
+
 .checkout-modal-status {
     min-height: 1.2rem;
 }
