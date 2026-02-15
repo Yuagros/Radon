@@ -7,7 +7,8 @@ const STORAGE_KEYS = {
     pendingDodoSession: "radon_pending_dodo_session",
     authRedirectLoopTarget: "radon_auth_redirect_loop_target",
     authRedirectLoopCount: "radon_auth_redirect_loop_count",
-    authRedirectLoopAt: "radon_auth_redirect_loop_at"
+    authRedirectLoopAt: "radon_auth_redirect_loop_at",
+    postLoginRedirect: "radon_post_login_redirect"
 };
 
 const DEFAULT_WALLETS = {
@@ -31,8 +32,15 @@ const CHECKOUT_METHODS = Object.freeze({
     CARD: "card"
 });
 
-const AUTH_REDIRECT_LOOP_WINDOW_MS = 15000;
+const AUTH_REDIRECT_LOOP_WINDOW_MS = 20000;
 const AUTH_REDIRECT_LOOP_LIMIT = 2;
+const POST_LOGIN_RETRY_DELAY_MS = 500;
+const APP_PAGES = Object.freeze({
+    INDEX: "index",
+    LOGIN: "login",
+    CHECKOUT: "checkout",
+    DASHBOARD: "dashboard"
+});
 
 function normalizeCoin(value) {
     const normalized = String(value || "")
@@ -46,6 +54,72 @@ function normalizeCheckoutMethod(value) {
         .trim()
         .toLowerCase();
     return normalized === CHECKOUT_METHODS.CARD ? CHECKOUT_METHODS.CARD : CHECKOUT_METHODS.CRYPTO;
+}
+
+function resolveRouteMode() {
+    const pathname = String(window.location.pathname || "").toLowerCase();
+    if (pathname.endsWith(".html")) return "html";
+
+    const trimmed = pathname.replace(/\/+$/, "");
+    const normalized = trimmed || "/";
+    const knownPrettyPaths = new Set(["/", "/index", "/login", "/checkout", "/dashboard"]);
+    return knownPrettyPaths.has(normalized) ? "pretty" : "html";
+}
+
+function pageNameFromPathname(pathname) {
+    const normalized = String(pathname || "")
+        .toLowerCase()
+        .replace(/\/+$/, "")
+        .replace(/^\/+/, "");
+
+    if (!normalized || normalized === "index" || normalized === "index.html") return APP_PAGES.INDEX;
+    if (normalized === "login" || normalized === "login.html") return APP_PAGES.LOGIN;
+    if (normalized === "checkout" || normalized === "checkout.html") return APP_PAGES.CHECKOUT;
+    if (normalized === "dashboard" || normalized === "dashboard.html") return APP_PAGES.DASHBOARD;
+    return "";
+}
+
+function buildPageHref(page, options = {}) {
+    const routeMode = resolveRouteMode();
+    const pageName = String(page || "").trim().toLowerCase();
+    if (!pageName) return routeMode === "pretty" ? "/" : "index.html";
+
+    let basePath;
+    if (routeMode === "pretty") {
+        basePath = pageName === APP_PAGES.INDEX ? "/" : `/${pageName}`;
+    } else {
+        basePath = pageName === APP_PAGES.INDEX ? "index.html" : `${pageName}.html`;
+    }
+
+    let query = "";
+    if (options.params instanceof URLSearchParams) {
+        query = options.params.toString();
+    } else if (typeof options.params === "string") {
+        query = options.params.replace(/^\?/, "");
+    } else if (options.params && typeof options.params === "object") {
+        query = new URLSearchParams(options.params).toString();
+    }
+
+    const rawHash = String(options.hash || "").trim();
+    const hash = rawHash ? (rawHash.startsWith("#") ? rawHash : `#${rawHash}`) : "";
+    return `${basePath}${query ? `?${query}` : ""}${hash}`;
+}
+
+function buildCheckoutHref(method, coin) {
+    if (normalizeCheckoutMethod(method) === CHECKOUT_METHODS.CARD) {
+        return buildPageHref(APP_PAGES.CHECKOUT, { params: { method: "card" } });
+    }
+    const normalizedCoin = normalizeCoin(coin) || "ETH";
+    return buildPageHref(APP_PAGES.CHECKOUT, { params: { coin: normalizedCoin } });
+}
+
+function buildLoginHref(redirectTarget) {
+    const params = new URLSearchParams({ mode: "signin" });
+    const normalizedRedirect = normalizeRedirectTarget(redirectTarget);
+    if (normalizedRedirect) {
+        params.set("redirect", normalizedRedirect);
+    }
+    return buildPageHref(APP_PAGES.LOGIN, { params });
 }
 
 function qs(selector) {
@@ -110,8 +184,12 @@ function normalizeRedirectTarget(rawTarget) {
     try {
         const parsed = new URL(value, window.location.origin);
         if (parsed.origin !== window.location.origin) return "";
-        const pathname = parsed.pathname.replace(/^\//, "") || "index.html";
-        return `${pathname}${parsed.search}`;
+        const pageName = pageNameFromPathname(parsed.pathname);
+        if (!pageName) return "";
+        return buildPageHref(pageName, {
+            params: parsed.searchParams,
+            hash: parsed.hash
+        });
     } catch (error) {
         return "";
     }
@@ -823,7 +901,11 @@ async function initLoginPage() {
             return;
         }
         clearAuthRedirectLoopState();
-        window.location.href = resolveAuthRedirectTarget(me?.user || null);
+        const redirectUrl = resolveAuthRedirectTarget(me?.user || null);
+        if (redirectUrl && (redirectUrl.startsWith("checkout") || redirectUrl.includes("checkout"))) {
+            safeSessionWrite(STORAGE_KEYS.postLoginRedirect, "1");
+        }
+        window.location.href = redirectUrl;
         return;
     } catch (error) {
         if (!isUnauthorized(error)) {
@@ -885,7 +967,11 @@ async function initLoginPage() {
 
             setStatus("Success. Redirecting...", false);
             clearAuthRedirectLoopState();
-            window.location.href = resolveAuthRedirectTarget(authResult?.user || null);
+            const redirectUrl = resolveAuthRedirectTarget(authResult?.user || null);
+            if (redirectUrl && (redirectUrl.startsWith("checkout") || redirectUrl.includes("checkout"))) {
+                safeSessionWrite(STORAGE_KEYS.postLoginRedirect, "1");
+            }
+            window.location.href = redirectUrl;
         } catch (error) {
             setStatus(error.message || "Authentication failed.", true);
         } finally {
@@ -2007,22 +2093,43 @@ async function initCheckoutPage() {
         window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
     }
 
-    let auth;
+    let auth = null;
+    const hadPostLoginFlag = Boolean(safeSessionRead(STORAGE_KEYS.postLoginRedirect));
+    if (hadPostLoginFlag) {
+        safeSessionRemove(STORAGE_KEYS.postLoginRedirect);
+    }
+
     try {
         const me = await requestJson("/api/auth/me");
         auth = me?.user || null;
     } catch (error) {
-        if (isUnauthorized(error)) {
+        if (isUnauthorized(error) && hadPostLoginFlag) {
+            await new Promise((r) => setTimeout(r, POST_LOGIN_RETRY_DELAY_MS));
+            try {
+                const retryMe = await requestJson("/api/auth/me");
+                auth = retryMe?.user || null;
+            } catch (retryErr) {
+                if (isUnauthorized(retryErr)) {
+                    redirectToLogin();
+                    return;
+                }
+                return;
+            }
+        } else if (isUnauthorized(error)) {
             redirectToLogin();
             return;
+        } else {
+            return;
         }
-        return;
     }
 
     if (!auth) {
         redirectToLogin();
         return;
     }
+
+    clearAuthRedirectLoopState();
+    safeSessionRemove(STORAGE_KEYS.postLoginRedirect);
 
     if (auth.hasPaidAccess) {
         window.location.href = "dashboard.html";
