@@ -32,6 +32,13 @@ const config = {
         ETH: process.env.WALLET_ETH || "0x9D575B4e92063BD6FA3e5b478Fa5EBFc8d531241",
         BTC: process.env.WALLET_BTC || "bc1p0wpgtfk3h6zv98had7kzfvgte4l237cmmt0sads7jg7n47lcknxsf0n2st",
         SOL: process.env.WALLET_SOL || "7ykaKV7RtPnHpckJBH5p3rxmSdAP1Z2598BmbqeuHK7Y"
+    },
+    dodo: {
+        apiKey: String(process.env.DODO_PAYMENTS_API_KEY || "").trim(),
+        environment: String(process.env.DODO_PAYMENTS_ENVIRONMENT || "test_mode")
+            .trim()
+            .toLowerCase(),
+        productId: String(process.env.DODO_PAYMENTS_PRODUCT_ID || "").trim()
     }
 };
 
@@ -60,6 +67,9 @@ const COIN_QUOTE_PRECISION = Object.freeze({
     BTC: 8,
     SOL: 6
 });
+const DODO_PAYMENT_COIN = "CARD";
+const DODO_PAYMENT_WALLET = "dodo_card_checkout";
+const DODO_PAYMENT_METHODS = Object.freeze(["credit", "debit"]);
 
 const runtimeSessionSecret =
     config.sessionSecret.length >= 24 ? config.sessionSecret : crypto.randomBytes(48).toString("hex");
@@ -135,6 +145,23 @@ CREATE TABLE IF NOT EXISTS invoices (
     quoted_usd_rate REAL,
     quote_source TEXT,
     expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS dodo_checkouts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
+    product_id TEXT NOT NULL,
+    amount_usd REAL NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    checkout_url TEXT,
+    payment_id TEXT,
+    payment_status TEXT,
+    payment_reference TEXT,
+    metadata TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -266,6 +293,26 @@ reconcilePaidAccess();
 
 function nowIso() {
     return new Date().toISOString();
+}
+
+function resolveSessionCookieSecure(nodeEnv) {
+    return nodeEnv === "production" ? "auto" : false;
+}
+
+function getDodoApiBaseUrl() {
+    return config.dodo.environment === "live_mode" ? "https://live.dodopayments.com" : "https://test.dodopayments.com";
+}
+
+function isDodoConfigured() {
+    return Boolean(config.dodo.apiKey && config.dodo.productId);
+}
+
+function buildExternalBaseUrl(req) {
+    const forwardedProto = String(req.get("x-forwarded-proto") || "")
+        .split(",")[0]
+        .trim();
+    const protocol = forwardedProto || req.protocol || "https";
+    return `${protocol}://${req.get("host")}`;
 }
 
 function normalizeEmail(email) {
@@ -402,6 +449,7 @@ app.use(express.json({ limit: "64kb" }));
 app.use(express.urlencoded({ extended: false }));
 
 const SQLiteStore = connectSqlite3(session);
+const sessionCookieSecure = resolveSessionCookieSecure(config.nodeEnv);
 app.use(
     session({
         name: "radon.sid",
@@ -415,7 +463,7 @@ app.use(
         cookie: {
             httpOnly: true,
             sameSite: "lax",
-            secure: config.nodeEnv === "production",
+            secure: sessionCookieSecure,
             maxAge: 1000 * 60 * 60 * 24 * 7
         }
     })
@@ -820,6 +868,209 @@ async function verifyPaymentOnChain(coin, txHash, walletAddress) {
     };
 }
 
+function normalizeDodoPaymentStatus(value) {
+    const normalized = String(value || "")
+        .trim()
+        .toLowerCase();
+    return normalized || null;
+}
+
+function mapDodoStatusToInternalStatus(dodoStatus) {
+    if (dodoStatus === "succeeded") return "verified";
+    if (dodoStatus === "failed" || dodoStatus === "cancelled") return "rejected";
+    return "pending_verification";
+}
+
+function isTerminalDodoStatus(dodoStatus) {
+    return ["succeeded", "failed", "cancelled"].includes(dodoStatus);
+}
+
+function publicDodoCheckout(row) {
+    if (!row) return null;
+    return {
+        sessionId: row.session_id,
+        productId: row.product_id,
+        amountUsd: Number(row.amount_usd || 0),
+        currency: row.currency || "USD",
+        checkoutUrl: row.checkout_url || null,
+        paymentId: row.payment_id || null,
+        paymentStatus: row.payment_status || null,
+        paymentReference: row.payment_reference || null,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
+
+function getCardPlanLabel(productId) {
+    const product = getBillingProductById(productId);
+    if (!product) return "Radon Card Checkout";
+    return `${product.name} (${product.termLabel})`;
+}
+
+async function dodoApiRequest(method, endpoint, body) {
+    if (!isDodoConfigured()) {
+        const error = new Error("Card checkout is not configured on the server.");
+        error.status = 503;
+        throw error;
+    }
+
+    const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const url = `${getDodoApiBaseUrl()}${normalizedEndpoint}`;
+    const headers = {
+        Authorization: `Bearer ${config.dodo.apiKey}`
+    };
+
+    if (body !== undefined) {
+        headers["Content-Type"] = "application/json";
+    }
+
+    const { response, payload } = await fetchJsonWithTimeout(
+        url,
+        {
+            method,
+            headers,
+            body: body !== undefined ? JSON.stringify(body) : undefined
+        },
+        12000
+    );
+
+    if (!response.ok) {
+        const message =
+            (payload && typeof payload === "object" && (payload.message || payload.error)) ||
+            (typeof payload === "string" ? payload : "");
+        const error = new Error(
+            message ? `Dodo request failed (${response.status}): ${message}` : `Dodo request failed (${response.status}).`
+        );
+        error.status = response.status;
+        error.payload = payload;
+        throw error;
+    }
+
+    if (!payload || typeof payload !== "object") {
+        throw new Error("Dodo returned an invalid response.");
+    }
+
+    return payload;
+}
+
+async function syncDodoCheckoutSession(row, context = {}) {
+    const remote = await dodoApiRequest("GET", `/checkouts/${encodeURIComponent(row.session_id)}`);
+    const now = nowIso();
+    const previousStatus = normalizeDodoPaymentStatus(row.payment_status);
+    const paymentStatus = normalizeDodoPaymentStatus(remote?.payment_status);
+    const paymentId = String(remote?.payment_id || "").trim() || null;
+
+    db.prepare("UPDATE dodo_checkouts SET payment_id = ?, payment_status = ?, updated_at = ? WHERE session_id = ?").run(
+        paymentId,
+        paymentStatus,
+        now,
+        row.session_id
+    );
+
+    let paymentReference = String(row.payment_reference || "").trim() || null;
+
+    if (paymentStatus === "succeeded") {
+        const paymentKey = paymentId || row.session_id;
+        const verificationDetails = {
+            provider: "dodo_payments",
+            checkoutSessionId: row.session_id,
+            paymentId,
+            paymentStatus,
+            syncedAt: now
+        };
+
+        const existing = db
+            .prepare("SELECT reference, status FROM payments WHERE coin = ? AND tx_hash = ?")
+            .get(DODO_PAYMENT_COIN, paymentKey);
+
+        if (existing) {
+            paymentReference = existing.reference;
+            if (existing.status !== "verified") {
+                db.prepare("UPDATE payments SET status = 'verified', verification_details = ?, updated_at = ? WHERE reference = ?").run(
+                    JSON.stringify(verificationDetails),
+                    now,
+                    paymentReference
+                );
+            }
+        } else {
+            paymentReference = createReference("PAY");
+            db.prepare(
+                `
+                INSERT INTO payments (
+                    reference, user_id, plan, amount_usd, coin, wallet, tx_hash, status, received_amount,
+                    verification_details, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `
+            ).run(
+                paymentReference,
+                row.user_id,
+                getCardPlanLabel(row.product_id),
+                Number(row.amount_usd || 0),
+                DODO_PAYMENT_COIN,
+                DODO_PAYMENT_WALLET,
+                paymentKey,
+                "verified",
+                null,
+                JSON.stringify(verificationDetails),
+                now,
+                now
+            );
+        }
+
+        db.prepare("UPDATE users SET has_paid_access = 1, active_plan = 'Lifetime', updated_at = ? WHERE id = ?").run(
+            now,
+            row.user_id
+        );
+        db.prepare("UPDATE dodo_checkouts SET payment_reference = ?, updated_at = ? WHERE session_id = ?").run(
+            paymentReference,
+            now,
+            row.session_id
+        );
+
+        if (previousStatus !== "succeeded") {
+            addSecurityEvent(
+                row.user_id,
+                "billing_verified",
+                "low",
+                "Card payment verified",
+                `Card checkout ${row.session_id} was verified by Dodo Payments.`,
+                context.actor || "system",
+                context.sourceIp || null
+            );
+        }
+    } else if (paymentStatus && (paymentStatus === "failed" || paymentStatus === "cancelled")) {
+        if (previousStatus !== paymentStatus) {
+            addSecurityEvent(
+                row.user_id,
+                "billing_rejected",
+                "medium",
+                paymentStatus === "failed" ? "Card payment failed" : "Card payment cancelled",
+                `Card checkout ${row.session_id} ended with status ${paymentStatus}.`,
+                context.actor || "system",
+                context.sourceIp || null
+            );
+        }
+    }
+
+    const refreshed = db
+        .prepare(
+            `
+            SELECT session_id, user_id, product_id, amount_usd, currency, checkout_url, payment_id, payment_status,
+                   payment_reference, metadata, created_at, updated_at
+            FROM dodo_checkouts
+            WHERE session_id = ?
+        `
+        )
+        .get(row.session_id);
+
+    return {
+        checkout: refreshed,
+        remote,
+        internalStatus: mapDodoStatusToInternalStatus(paymentStatus)
+    };
+}
+
 function getDashboardSummary(userId) {
     const now = new Date();
     const labels = [];
@@ -1070,12 +1321,160 @@ app.get("/api/billing/catalog", requireAuth, (req, res) => {
         products: BILLING_PRODUCTS,
         wallets: config.wallets,
         supportedCoins: SUPPORTED_COINS,
+        cardCheckout: {
+            enabled: isDodoConfigured(),
+            provider: "dodo_payments"
+        },
         networks: {
             ETH: "Ethereum mainnet",
             BTC: "Bitcoin mainnet",
             SOL: "Solana mainnet"
         }
     });
+});
+
+app.post("/api/billing/dodo/checkouts", requireAuth, async (req, res, next) => {
+    try {
+        if (!isDodoConfigured()) {
+            return res.status(503).json({
+                error: "Card checkout is not configured yet. Add DODO_PAYMENTS_API_KEY and DODO_PAYMENTS_PRODUCT_ID."
+            });
+        }
+        if (req.user?.has_paid_access) {
+            return res.status(409).json({ error: "This account already has paid access." });
+        }
+
+        const productId = String(req.body?.productId || "radon_anti_cheat_lifetime").trim();
+        const product = getBillingProductById(productId);
+        if (!product) {
+            return res.status(400).json({ error: "Product is invalid." });
+        }
+
+        const returnUrl = `${buildExternalBaseUrl(req)}/checkout.html?method=card`;
+        const metadata = {
+            radon_user_id: String(req.user.id),
+            radon_product_id: product.id
+        };
+
+        const payload = await dodoApiRequest("POST", "/checkouts", {
+            product_cart: [{ product_id: config.dodo.productId, quantity: 1 }],
+            allowed_payment_method_types: DODO_PAYMENT_METHODS,
+            customer: {
+                email: req.user.email,
+                name: req.user.display_name
+            },
+            return_url: returnUrl,
+            metadata
+        });
+
+        const sessionId = String(payload?.session_id || "").trim();
+        const checkoutUrl = String(payload?.checkout_url || "").trim();
+        if (!sessionId || !checkoutUrl) {
+            return res.status(502).json({ error: "Dodo did not return a valid checkout session." });
+        }
+
+        const now = nowIso();
+        const paymentStatus = normalizeDodoPaymentStatus(payload?.payment_status) || "requires_payment_method";
+
+        db.prepare(
+            `
+            INSERT INTO dodo_checkouts (
+                session_id, user_id, product_id, amount_usd, currency, checkout_url, payment_id, payment_status,
+                payment_reference, metadata, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+        ).run(
+            sessionId,
+            req.user.id,
+            product.id,
+            Number(product.priceUsd || 0),
+            "USD",
+            checkoutUrl,
+            String(payload?.payment_id || "").trim() || null,
+            paymentStatus,
+            null,
+            JSON.stringify(metadata),
+            now,
+            now
+        );
+
+        addSecurityEvent(
+            req.user.id,
+            "billing_invoice_created",
+            "low",
+            "Card checkout started",
+            `Started Dodo card checkout session ${sessionId}.`,
+            req.user.display_name,
+            req.ip
+        );
+
+        return res.status(201).json({
+            checkout: {
+                sessionId,
+                checkoutUrl,
+                paymentStatus,
+                amountUsd: Number(product.priceUsd || 0),
+                productId: product.id
+            }
+        });
+    } catch (error) {
+        req.log.error({ err: error }, "Dodo checkout session creation failed");
+        return next(error);
+    }
+});
+
+app.get("/api/billing/dodo/checkouts/:sessionId", requireAuth, async (req, res, next) => {
+    try {
+        const sessionId = String(req.params?.sessionId || "").trim();
+        if (!sessionId) {
+            return res.status(400).json({ error: "Session ID is required." });
+        }
+
+        const row = db
+            .prepare(
+                `
+                SELECT session_id, user_id, product_id, amount_usd, currency, checkout_url, payment_id, payment_status,
+                       payment_reference, metadata, created_at, updated_at
+                FROM dodo_checkouts
+                WHERE session_id = ? AND user_id = ?
+            `
+            )
+            .get(sessionId, req.user.id);
+
+        if (!row) {
+            return res.status(404).json({ error: "Card checkout session not found." });
+        }
+        if (!isDodoConfigured()) {
+            return res.status(503).json({
+                error: "Card checkout is not configured yet. Add DODO_PAYMENTS_API_KEY and DODO_PAYMENTS_PRODUCT_ID."
+            });
+        }
+
+        let activeCheckout = row;
+        const shouldRefresh = !isTerminalDodoStatus(normalizeDodoPaymentStatus(row.payment_status)) || !row.payment_reference;
+
+        if (shouldRefresh) {
+            const synced = await syncDodoCheckoutSession(row, {
+                actor: req.user.display_name,
+                sourceIp: req.ip
+            });
+            activeCheckout = synced.checkout;
+        }
+
+        const freshUser = db
+            .prepare("SELECT id, display_name, email, active_plan, has_paid_access, avatar_url, created_at FROM users WHERE id = ?")
+            .get(req.user.id);
+
+        return res.json({
+            checkout: publicDodoCheckout(activeCheckout),
+            user: publicUser(freshUser),
+            accessGranted: Boolean(freshUser?.has_paid_access)
+        });
+    } catch (error) {
+        req.log.error({ err: error }, "Dodo checkout status sync failed");
+        return next(error);
+    }
 });
 
 app.get("/api/billing/invoices", requireAuth, (req, res) => {

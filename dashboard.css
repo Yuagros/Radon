@@ -70,7 +70,7 @@
 
 .logout-link {
     margin-top: auto;
-    color: #ff9cb1;
+    color: #9fc2ff;
 }
 
 .main-content {
@@ -285,8 +285,8 @@
 }
 
 .sev-high {
-    color: #ffd9de;
-    border-color: rgba(255, 125, 145, 0.48);
+    color: #ffe4bf;
+    border-color: rgba(255, 166, 117, 0.5);
     background: rgba(164, 39, 62, 0.28);
 }
 
@@ -315,8 +315,8 @@
 }
 
 .pay-rejected {
-    color: #ffd4de;
-    border-color: rgba(255, 120, 143, 0.52);
+    color: #ffd9b8;
+    border-color: rgba(255, 166, 117, 0.52);
     background: rgba(138, 34, 52, 0.28);
 }
 
@@ -468,7 +468,7 @@
 
 .invoice-status.status-rejected,
 .invoice-status.status-expired {
-    color: #ffb3c3;
+    color: #ffc28f;
 }
 
 .invoice-timer {

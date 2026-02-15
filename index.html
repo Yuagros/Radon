@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radon - Roblox Anti-Cheat</title>
     <meta name="theme-color" content="#0B1220">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%233B82F6' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 24L60 48L60 108C60 136 78 160 100 174C122 160 140 136 140 108L140 48Z' fill='none' stroke='%235F84B4' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/><path d='M79 100L97 118L123 86' fill='none' stroke='%239FC2FF' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="home-page">
@@ -14,7 +14,8 @@
         <div class="container nav-wrap">
             <a class="brand" href="index.html" aria-label="Radon home">
                 <svg viewBox="0 0 200 200" width="28" height="28" aria-hidden="true">
-                    <path d="M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M100 24L60 48L60 108C60 136 78 160 100 174C122 160 140 136 140 108L140 48Z" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M79 100L97 118L123 86" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Radon</span>
             </a>
@@ -45,8 +46,8 @@
                     <div class="hero-icon-build hero-icon-minimal" aria-hidden="true">
                         <svg class="hero-icon-minimal-svg" viewBox="0 0 200 200" width="142" height="142">
                             <circle class="minimal-ring" cx="100" cy="100" r="58"></circle>
-                            <path class="minimal-shield" d="M100 56 L78 78 L81 121 L100 140 L119 121 L122 78 Z"></path>
-                            <path class="minimal-cut" d="M100 73V125"></path>
+                            <path class="minimal-shield" d="M100 52L70 70V110C70 130 83 147 100 159C117 147 130 130 130 110V70Z"></path>
+                            <path class="minimal-cut" d="M82 103L98 119L120 88"></path>
                         </svg>
                         <span class="minimal-sweep"></span>
                     </div>
@@ -231,10 +232,10 @@
         <div class="checkout-modal-dialog card" role="dialog" aria-modal="true" aria-labelledby="checkout-modal-title">
             <button class="checkout-modal-close" type="button" aria-label="Close checkout options" data-close-checkout-modal="true">x</button>
             <p class="checkout-modal-eyebrow">Lifetime Plan</p>
-            <h2 id="checkout-modal-title">Select your crypto payment method</h2>
-            <p class="muted">Choose a coin and continue directly to your invoice checkout.</p>
+            <h2 id="checkout-modal-title">Select your payment method</h2>
+            <p class="muted">Choose crypto or card and continue to secure checkout.</p>
             <fieldset class="checkout-coin-grid" id="checkout-coin-group">
-                <legend class="sr-only">Select payment coin</legend>
+                <legend class="sr-only">Select payment method</legend>
                 <label class="checkout-coin-option">
                     <input type="radio" name="checkout-coin" value="ETH" checked>
                     <span class="checkout-coin-icon checkout-coin-icon-eth" aria-hidden="true">
@@ -267,6 +268,17 @@
                         </svg>
                     </span>
                     <span class="checkout-coin-text">Solana (SOL)</span>
+                </label>
+                <label class="checkout-coin-option">
+                    <input type="radio" name="checkout-coin" value="CARD">
+                    <span class="checkout-coin-icon checkout-coin-icon-card" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+                            <path d="M3 10H21"></path>
+                            <path d="M8 15H11"></path>
+                        </svg>
+                    </span>
+                    <span class="checkout-coin-text">Card (Dodo Payments)</span>
                 </label>
             </fieldset>
             <p class="muted checkout-modal-status" id="checkout-modal-status" aria-live="polite"></p>

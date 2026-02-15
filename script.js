@@ -2,7 +2,9 @@ const STORAGE_KEYS = {
     plan: "radon_selected_plan",
     rememberedEmail: "radon_remembered_email",
     selectedProduct: "radon_selected_product",
-    selectedCoin: "radon_selected_coin"
+    selectedCoin: "radon_selected_coin",
+    selectedPaymentMethod: "radon_selected_payment_method",
+    pendingDodoSession: "radon_pending_dodo_session"
 };
 
 const DEFAULT_WALLETS = {
@@ -21,11 +23,23 @@ const PLAN_PRICES = {
     Lifetime: 15
 };
 
+const CHECKOUT_METHODS = Object.freeze({
+    CRYPTO: "crypto",
+    CARD: "card"
+});
+
 function normalizeCoin(value) {
     const normalized = String(value || "")
         .trim()
         .toUpperCase();
     return ["ETH", "BTC", "SOL"].includes(normalized) ? normalized : "";
+}
+
+function normalizeCheckoutMethod(value) {
+    const normalized = String(value || "")
+        .trim()
+        .toLowerCase();
+    return normalized === CHECKOUT_METHODS.CARD ? CHECKOUT_METHODS.CARD : CHECKOUT_METHODS.CRYPTO;
 }
 
 function qs(selector) {
@@ -313,13 +327,19 @@ function initCheckoutModal() {
     function setModalStatus(message, isError) {
         if (!status) return;
         status.textContent = message;
-        status.style.color = isError ? "#ff9db2" : "";
+        status.style.color = isError ? "#ffb980" : "";
     }
 
-    function getSelectedCoin() {
+    function getSelectedCheckoutOption() {
         const checked = qs('input[name="checkout-coin"]:checked');
         if (checked instanceof HTMLInputElement) {
-            return normalizeCoin(checked.value) || "ETH";
+            const raw = String(checked.value || "")
+                .trim()
+                .toUpperCase();
+            if (raw === "CARD") {
+                return "CARD";
+            }
+            return normalizeCoin(raw) || "ETH";
         }
         return "ETH";
     }
@@ -333,8 +353,11 @@ function initCheckoutModal() {
         });
     }
 
-    function setSelectedCoin(coin) {
-        const normalized = normalizeCoin(coin) || "ETH";
+    function setSelectedCheckoutOption(value) {
+        const raw = String(value || "")
+            .trim()
+            .toUpperCase();
+        const normalized = raw === "CARD" ? "CARD" : normalizeCoin(raw) || "ETH";
         const option = qs(`input[name="checkout-coin"][value="${normalized}"]`);
         if (option instanceof HTMLInputElement) {
             option.checked = true;
@@ -342,9 +365,17 @@ function initCheckoutModal() {
         syncCoinSelectionState();
     }
 
+    function getStoredCheckoutOption() {
+        const method = normalizeCheckoutMethod(safeRead(STORAGE_KEYS.selectedPaymentMethod));
+        if (method === CHECKOUT_METHODS.CARD) {
+            return "CARD";
+        }
+        return normalizeCoin(safeRead(STORAGE_KEYS.selectedCoin)) || "ETH";
+    }
+
     function openModal() {
         lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        setSelectedCoin(safeRead(STORAGE_KEYS.selectedCoin));
+        setSelectedCheckoutOption(getStoredCheckoutOption());
         setModalStatus("", false);
         modal.hidden = false;
         modal.setAttribute("aria-hidden", "false");
@@ -395,10 +426,17 @@ function initCheckoutModal() {
 
     if (proceedButton) {
         proceedButton.addEventListener("click", () => {
-            const coin = getSelectedCoin();
-            safeWrite(STORAGE_KEYS.selectedCoin, coin);
+            const selected = getSelectedCheckoutOption();
             setModalStatus("Opening checkout...", false);
-            window.location.href = `checkout.html?coin=${encodeURIComponent(coin)}`;
+            if (selected === "CARD") {
+                safeWrite(STORAGE_KEYS.selectedPaymentMethod, CHECKOUT_METHODS.CARD);
+                window.location.href = "checkout.html?method=card";
+                return;
+            }
+
+            safeWrite(STORAGE_KEYS.selectedCoin, selected);
+            safeWrite(STORAGE_KEYS.selectedPaymentMethod, CHECKOUT_METHODS.CRYPTO);
+            window.location.href = `checkout.html?coin=${encodeURIComponent(selected)}`;
         });
     }
 }
@@ -480,7 +518,7 @@ async function initHomeAuthNav() {
 
         const hasPaidAccess = Boolean(user.hasPaidAccess);
 
-        authLink.href = hasPaidAccess ? "dashboard.html" : "checkout.html";
+        authLink.href = hasPaidAccess ? "dashboard.html" : resolveAuthRedirectTarget(user);
         authLink.classList.remove("btn", "btn-ghost");
         authLink.classList.add("profile-nav-link");
         authLink.replaceChildren(avatar, name);
@@ -578,7 +616,16 @@ function resolveAuthRedirectTarget(user) {
         }
     }
 
-    return user?.hasPaidAccess ? "dashboard.html" : "checkout.html";
+    if (user?.hasPaidAccess) {
+        return "dashboard.html";
+    }
+
+    const preferredMethod = normalizeCheckoutMethod(safeRead(STORAGE_KEYS.selectedPaymentMethod));
+    if (preferredMethod === CHECKOUT_METHODS.CARD) {
+        return "checkout.html?method=card";
+    }
+    const preferredCoin = normalizeCoin(safeRead(STORAGE_KEYS.selectedCoin)) || "ETH";
+    return `checkout.html?coin=${encodeURIComponent(preferredCoin)}`;
 }
 
 async function initLoginPage() {
@@ -605,7 +652,7 @@ async function initLoginPage() {
     function setStatus(message, isError) {
         if (!status) return;
         status.textContent = message;
-        status.style.color = isError ? "#ff9db2" : "";
+        status.style.color = isError ? "#ffb980" : "";
     }
 
     function setMode(nextMode) {
@@ -1146,7 +1193,7 @@ function initProfileSettings(auth, onUserUpdated) {
     function setProfileStatus(message, isError) {
         if (!status) return;
         status.textContent = message;
-        status.style.color = isError ? "#ff9db2" : "";
+        status.style.color = isError ? "#ffb980" : "";
     }
 
     const preview = () => {
@@ -1252,7 +1299,7 @@ async function initCryptoPayments(auth, options = {}) {
     function setStatus(node, message, isError) {
         if (!node) return;
         node.textContent = message;
-        node.style.color = isError ? "#ff9db2" : "";
+        node.style.color = isError ? "#ffb980" : "";
     }
 
     function coinLabel(coin) {
@@ -1653,13 +1700,195 @@ async function initCryptoPayments(auth, options = {}) {
     }
 }
 
+function getDodoSessionIdFromSearch() {
+    const params = new URLSearchParams(window.location.search);
+    const keys = ["dodo_session", "checkout_session_id", "session_id", "session"];
+    for (const key of keys) {
+        const value = String(params.get(key) || "").trim();
+        if (value) {
+            return value;
+        }
+    }
+    return "";
+}
+
+async function initCardCheckout(auth) {
+    const cardShell = qs("#dodo-card-shell");
+    if (!(cardShell instanceof HTMLElement)) return;
+
+    const payButton = qs("#dodo-card-pay-btn");
+    const refreshButton = qs("#dodo-card-refresh-btn");
+    const statusNode = qs("#dodo-card-status");
+    const sessionNode = qs("#dodo-card-session-id");
+    const paymentNode = qs("#dodo-card-payment-id");
+    const paymentStatusNode = qs("#dodo-card-payment-status");
+    const checkoutLink = qs("#dodo-card-open-checkout");
+
+    const productId = "radon_anti_cheat_lifetime";
+    let activeSessionId = "";
+
+    function setCardStatus(message, isError) {
+        if (!statusNode) return;
+        statusNode.textContent = message;
+        statusNode.style.color = isError ? "#ffb980" : "";
+    }
+
+    function renderCardCheckout(checkout) {
+        if (sessionNode) {
+            sessionNode.textContent = checkout?.sessionId || "--";
+        }
+        if (paymentNode) {
+            paymentNode.textContent = checkout?.paymentId || "--";
+        }
+        if (paymentStatusNode) {
+            const status = String(checkout?.paymentStatus || "waiting").replace(/_/g, " ");
+            paymentStatusNode.textContent = status;
+        }
+        if (checkoutLink instanceof HTMLAnchorElement) {
+            const nextUrl = String(checkout?.checkoutUrl || "").trim();
+            checkoutLink.href = nextUrl || "#";
+            checkoutLink.classList.toggle("disabled-link", !nextUrl);
+        }
+    }
+
+    async function syncSession(sessionId, silent) {
+        if (!sessionId) {
+            setCardStatus("Create a card checkout session to begin.", false);
+            return;
+        }
+
+        if (!silent) {
+            setCardStatus("Checking payment status...", false);
+        }
+
+        try {
+            const payload = await requestJson(`/api/billing/dodo/checkouts/${encodeURIComponent(sessionId)}`);
+            const checkout = payload?.checkout || null;
+            const status = String(checkout?.paymentStatus || "").toLowerCase();
+
+            renderCardCheckout(checkout);
+
+            if (status === "succeeded" || payload?.accessGranted) {
+                safeRemove(STORAGE_KEYS.pendingDodoSession);
+                setCardStatus("Card payment verified. Unlocking dashboard...", false);
+                window.setTimeout(() => {
+                    window.location.href = "dashboard.html";
+                }, 700);
+                return;
+            }
+
+            if (status === "failed" || status === "cancelled") {
+                safeRemove(STORAGE_KEYS.pendingDodoSession);
+                setCardStatus(`Card checkout ${status}. You can start a new payment session.`, true);
+                return;
+            }
+
+            setCardStatus("Waiting for card payment confirmation.", false);
+        } catch (error) {
+            setCardStatus(error.message || "Could not sync card payment status.", true);
+        }
+    }
+
+    async function createCardCheckoutSession() {
+        if (!(payButton instanceof HTMLButtonElement)) return;
+        payButton.disabled = true;
+        setCardStatus("Starting secure card checkout...", false);
+
+        try {
+            const payload = await requestJson("/api/billing/dodo/checkouts", {
+                method: "POST",
+                body: { productId }
+            });
+            const checkout = payload?.checkout || null;
+            const sessionId = String(checkout?.sessionId || "").trim();
+            const checkoutUrl = String(checkout?.checkoutUrl || "").trim();
+
+            if (!sessionId || !checkoutUrl) {
+                throw new Error("Card checkout session could not be created.");
+            }
+
+            activeSessionId = sessionId;
+            safeWrite(STORAGE_KEYS.pendingDodoSession, sessionId);
+            safeWrite(STORAGE_KEYS.selectedPaymentMethod, CHECKOUT_METHODS.CARD);
+            safeWrite(STORAGE_KEYS.selectedProduct, productId);
+
+            renderCardCheckout(checkout);
+            setCardStatus("Redirecting to secure card checkout...", false);
+            window.location.href = checkoutUrl;
+        } catch (error) {
+            setCardStatus(error.message || "Could not start card checkout.", true);
+            payButton.disabled = false;
+        }
+    }
+
+    const returnedSession = getDodoSessionIdFromSearch();
+    const pendingSession = String(safeRead(STORAGE_KEYS.pendingDodoSession) || "").trim();
+    activeSessionId = returnedSession || pendingSession;
+
+    if (returnedSession) {
+        safeWrite(STORAGE_KEYS.pendingDodoSession, returnedSession);
+    }
+
+    if (activeSessionId) {
+        renderCardCheckout({
+            sessionId: activeSessionId,
+            paymentId: null,
+            paymentStatus: "processing",
+            checkoutUrl: null
+        });
+        await syncSession(activeSessionId, true);
+    } else {
+        renderCardCheckout(null);
+        setCardStatus("Pay securely with card through Dodo Payments.", false);
+    }
+
+    if (payButton instanceof HTMLButtonElement) {
+        payButton.addEventListener("click", () => {
+            createCardCheckoutSession().catch(() => undefined);
+        });
+    }
+
+    if (refreshButton instanceof HTMLButtonElement) {
+        refreshButton.addEventListener("click", () => {
+            syncSession(activeSessionId, false).catch(() => undefined);
+        });
+    }
+
+    if (auth?.hasPaidAccess) {
+        safeRemove(STORAGE_KEYS.pendingDodoSession);
+    }
+}
+
 async function initCheckoutPage() {
     const checkoutRoot = qs(".checkout-page");
     if (!(checkoutRoot instanceof HTMLElement)) return;
 
-    const requestedCoin = normalizeCoin(new URLSearchParams(window.location.search).get("coin")) || "ETH";
+    const params = new URLSearchParams(window.location.search);
+    const requestedMethod = normalizeCheckoutMethod(
+        params.get("method") || safeRead(STORAGE_KEYS.selectedPaymentMethod) || CHECKOUT_METHODS.CRYPTO
+    );
+    const requestedCoin = normalizeCoin(params.get("coin") || safeRead(STORAGE_KEYS.selectedCoin)) || "ETH";
+
+    safeWrite(STORAGE_KEYS.selectedPaymentMethod, requestedMethod);
     safeWrite(STORAGE_KEYS.selectedCoin, requestedCoin);
     setSelectedPlan("Lifetime");
+    checkoutRoot.classList.toggle("checkout-card-mode", requestedMethod === CHECKOUT_METHODS.CARD);
+    checkoutRoot.classList.toggle("checkout-crypto-mode", requestedMethod !== CHECKOUT_METHODS.CARD);
+
+    const paymentLabel =
+        requestedMethod === CHECKOUT_METHODS.CARD
+            ? "Card"
+            : requestedCoin === "BTC"
+              ? "Bitcoin"
+              : requestedCoin === "SOL"
+                ? "Solana"
+                : "Ethereum";
+    setElementText("#checkout-selected-coin", paymentLabel);
+
+    const redirectTarget =
+        requestedMethod === CHECKOUT_METHODS.CARD
+            ? "checkout.html?method=card"
+            : `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
 
     let auth;
     try {
@@ -1667,7 +1896,6 @@ async function initCheckoutPage() {
         auth = me?.user || null;
     } catch (error) {
         if (isUnauthorized(error)) {
-            const redirectTarget = `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
             window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
             return;
         }
@@ -1675,13 +1903,17 @@ async function initCheckoutPage() {
     }
 
     if (!auth) {
-        const redirectTarget = `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
         window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
         return;
     }
 
     if (auth.hasPaidAccess) {
         window.location.href = "dashboard.html";
+        return;
+    }
+
+    if (requestedMethod === CHECKOUT_METHODS.CARD) {
+        await initCardCheckout(auth);
         return;
     }
 
@@ -1701,7 +1933,7 @@ async function initDashboardPage() {
         const me = await requestJson("/api/auth/me");
         auth = me.user;
     } catch (error) {
-        window.location.href = "login.html?mode=signin";
+        window.location.href = "login.html?mode=signin&redirect=dashboard.html";
         return;
     }
 
@@ -1711,7 +1943,13 @@ async function initDashboardPage() {
     };
 
     if (!auth?.hasPaidAccess) {
-        window.location.href = "checkout.html";
+        const preferredMethod = normalizeCheckoutMethod(safeRead(STORAGE_KEYS.selectedPaymentMethod));
+        if (preferredMethod === CHECKOUT_METHODS.CARD) {
+            window.location.href = "checkout.html?method=card";
+        } else {
+            const preferredCoin = normalizeCoin(safeRead(STORAGE_KEYS.selectedCoin)) || "ETH";
+            window.location.href = `checkout.html?coin=${encodeURIComponent(preferredCoin)}`;
+        }
         return;
     }
 

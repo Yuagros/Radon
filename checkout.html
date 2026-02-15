@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Radon</title>
     <meta name="theme-color" content="#0B1220">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%233B82F6' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 24L60 48L60 108C60 136 78 160 100 174C122 160 140 136 140 108L140 48Z' fill='none' stroke='%235F84B4' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/><path d='M79 100L97 118L123 86' fill='none' stroke='%239FC2FF' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
 </head>
@@ -15,7 +15,8 @@
         <div class="container nav-wrap">
             <a class="brand" href="index.html" aria-label="Radon home">
                 <svg viewBox="0 0 200 200" width="28" height="28" aria-hidden="true">
-                    <path d="M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M100 24L60 48L60 108C60 136 78 160 100 174C122 160 140 136 140 108L140 48Z" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M79 100L97 118L123 86" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Radon</span>
             </a>
@@ -33,8 +34,39 @@
             <article class="card panel-card checkout-intro-card">
                 <p class="checkout-eyebrow">Secure Checkout</p>
                 <h1>Complete your Radon Lifetime payment</h1>
-                <p class="muted">Your selected coin is locked for this checkout session. Send payment, submit your transaction hash, and access unlocks after verification.</p>
-                <p class="muted checkout-selected-coin">Selected coin: <strong id="checkout-selected-coin">Ethereum</strong></p>
+                <p class="muted">Choose crypto invoice checkout or secure card checkout with Dodo Payments. Access unlocks automatically after verification.</p>
+                <p class="muted checkout-selected-coin">Selected payment method: <strong id="checkout-selected-coin">Ethereum</strong></p>
+            </article>
+
+            <article class="card panel-card dodo-card-shell" id="dodo-card-shell">
+                <div class="panel-head">
+                    <h2>Card Checkout</h2>
+                    <p class="muted">Secure card processing powered by Dodo Payments.</p>
+                </div>
+                <dl class="invoice-summary">
+                    <div>
+                        <dt>Checkout Session</dt>
+                        <dd id="dodo-card-session-id">--</dd>
+                    </div>
+                    <div>
+                        <dt>Payment ID</dt>
+                        <dd id="dodo-card-payment-id">--</dd>
+                    </div>
+                    <div>
+                        <dt>Status</dt>
+                        <dd id="dodo-card-payment-status">waiting</dd>
+                    </div>
+                    <div>
+                        <dt>Total</dt>
+                        <dd>$15.00 USD</dd>
+                    </div>
+                </dl>
+                <div class="dodo-card-actions">
+                    <button class="btn btn-primary" type="button" id="dodo-card-pay-btn">Pay $15.00 with Card</button>
+                    <button class="btn btn-ghost" type="button" id="dodo-card-refresh-btn">Refresh Status</button>
+                    <a class="btn btn-ghost disabled-link" id="dodo-card-open-checkout" href="#" target="_blank" rel="noopener">Open Checkout Again</a>
+                </div>
+                <p class="muted crypto-status" id="dodo-card-status" aria-live="polite"></p>
             </article>
 
             <form id="invoice-create-form" class="form-grid checkout-hidden-create" novalidate aria-hidden="true">

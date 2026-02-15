@@ -19,7 +19,7 @@
     --border: #efccda;
     --text: #4a2432;
     --muted: #8f6474;
-    --accent: #d63f75;
+    --accent: #5f84b4;
     --accent-soft: #b92f61;
 }
 
@@ -149,12 +149,12 @@ svg {
 }
 
 .home-page .btn-primary {
-    background: linear-gradient(135deg, var(--accent), #ea779f);
+    background: linear-gradient(135deg, var(--accent), #7da5d8);
     box-shadow: 0 10px 20px rgba(186, 56, 104, 0.27);
 }
 
 .home-page .btn-primary:hover {
-    background: linear-gradient(135deg, var(--accent-soft), #d35686);
+    background: linear-gradient(135deg, var(--accent-soft), #6f97cb);
     box-shadow: 0 14px 28px rgba(173, 45, 90, 0.3);
 }
 
@@ -535,7 +535,7 @@ svg {
 
 .clean-feature {
     background: #151515;
-    border-top: 2px solid rgba(244, 63, 94, 0.75);
+    border-top: 2px solid rgba(95, 132, 180, 0.75);
 }
 
 .home-page .clean-feature {
@@ -583,7 +583,7 @@ svg {
 
 .home-page .pricing-card:hover,
 .home-page .pricing-card:focus-within {
-    border-color: #de6793;
+    border-color: #5f84b4;
     box-shadow: 0 18px 30px rgba(191, 85, 125, 0.23);
 }
 
@@ -634,7 +634,7 @@ svg {
 }
 
 .home-page .pricing-card.featured {
-    border-color: #de6793;
+    border-color: #5f84b4;
     box-shadow: 0 18px 32px rgba(188, 78, 119, 0.3);
 }
 
@@ -673,11 +673,11 @@ svg {
 }
 
 .home-page .faq-symbol {
-    color: #e07aa2;
+    color: #9dc0e3;
 }
 
 .home-page .faq-item.open .faq-symbol {
-    color: #c94e7e;
+    color: #7ea5cc;
 }
 
 .faq-answer {
@@ -1889,6 +1889,10 @@ svg {
     stroke: none;
 }
 
+.checkout-coin-icon-card {
+    color: #9fd6ff;
+}
+
 .checkout-coin-text {
     color: #d8e7ff;
     font-size: 0.94rem;
@@ -1939,6 +1943,30 @@ svg {
 
 .checkout-hidden-create {
     display: none !important;
+}
+
+.dodo-card-shell {
+    display: none;
+    gap: 0.8rem;
+}
+
+.checkout-page.checkout-card-mode .dodo-card-shell {
+    display: grid;
+}
+
+.checkout-page.checkout-card-mode .invoice-shell,
+.checkout-page.checkout-card-mode #invoice-create-form {
+    display: none !important;
+}
+
+.checkout-page.checkout-crypto-mode .dodo-card-shell {
+    display: none;
+}
+
+.dodo-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
 }
 
 .sr-only {
@@ -2394,7 +2422,8 @@ svg {
 
 .checkout-coin-icon-eth,
 .checkout-coin-icon-btc,
-.checkout-coin-icon-sol {
+.checkout-coin-icon-sol,
+.checkout-coin-icon-card {
     color: rgba(var(--mono-rgb), 0.92);
 }
 
