@@ -5,8 +5,9 @@ const STORAGE_KEYS = {
     selectedCoin: "radon_selected_coin",
     selectedPaymentMethod: "radon_selected_payment_method",
     pendingDodoSession: "radon_pending_dodo_session",
-    checkoutLoginLoopCount: "radon_checkout_login_loop_count",
-    checkoutLoginLoopAt: "radon_checkout_login_loop_at"
+    authRedirectLoopTarget: "radon_auth_redirect_loop_target",
+    authRedirectLoopCount: "radon_auth_redirect_loop_count",
+    authRedirectLoopAt: "radon_auth_redirect_loop_at"
 };
 
 const DEFAULT_WALLETS = {
@@ -30,8 +31,8 @@ const CHECKOUT_METHODS = Object.freeze({
     CARD: "card"
 });
 
-const CHECKOUT_LOGIN_LOOP_WINDOW_MS = 15000;
-const CHECKOUT_LOGIN_LOOP_LIMIT = 2;
+const AUTH_REDIRECT_LOOP_WINDOW_MS = 15000;
+const AUTH_REDIRECT_LOOP_LIMIT = 2;
 
 function normalizeCoin(value) {
     const normalized = String(value || "")
@@ -103,35 +104,65 @@ function safeSessionRemove(key) {
     }
 }
 
-function getCheckoutLoginLoopState() {
-    const count = Number(safeSessionRead(STORAGE_KEYS.checkoutLoginLoopCount) || 0);
-    const lastAt = Number(safeSessionRead(STORAGE_KEYS.checkoutLoginLoopAt) || 0);
-    const withinWindow = lastAt > 0 && Date.now() - lastAt <= CHECKOUT_LOGIN_LOOP_WINDOW_MS;
+function normalizeRedirectTarget(rawTarget) {
+    const value = String(rawTarget || "").trim();
+    if (!value) return "";
+    try {
+        const parsed = new URL(value, window.location.origin);
+        if (parsed.origin !== window.location.origin) return "";
+        const pathname = parsed.pathname.replace(/^\//, "") || "index.html";
+        return `${pathname}${parsed.search}`;
+    } catch (error) {
+        return "";
+    }
+}
+
+function getAuthRedirectLoopState() {
+    const target = String(safeSessionRead(STORAGE_KEYS.authRedirectLoopTarget) || "").trim();
+    const count = Number(safeSessionRead(STORAGE_KEYS.authRedirectLoopCount) || 0);
+    const lastAt = Number(safeSessionRead(STORAGE_KEYS.authRedirectLoopAt) || 0);
+    const withinWindow = lastAt > 0 && Date.now() - lastAt <= AUTH_REDIRECT_LOOP_WINDOW_MS;
 
     if (!withinWindow) {
         return {
+            target: "",
             count: 0,
             lastAt: 0
         };
     }
 
     return {
+        target,
         count,
         lastAt
     };
 }
 
-function recordCheckoutLoginLoopBounce() {
-    const previous = getCheckoutLoginLoopState();
-    const nextCount = previous.count + 1;
-    safeSessionWrite(STORAGE_KEYS.checkoutLoginLoopCount, String(nextCount));
-    safeSessionWrite(STORAGE_KEYS.checkoutLoginLoopAt, String(Date.now()));
+function recordAuthRedirectLoopBounce(rawTarget) {
+    const target = normalizeRedirectTarget(rawTarget);
+    if (!target) return 0;
+
+    const previous = getAuthRedirectLoopState();
+    const isSameTarget = previous.target === target;
+    const nextCount = isSameTarget ? previous.count + 1 : 1;
+
+    safeSessionWrite(STORAGE_KEYS.authRedirectLoopTarget, target);
+    safeSessionWrite(STORAGE_KEYS.authRedirectLoopCount, String(nextCount));
+    safeSessionWrite(STORAGE_KEYS.authRedirectLoopAt, String(Date.now()));
     return nextCount;
 }
 
-function clearCheckoutLoginLoopState() {
-    safeSessionRemove(STORAGE_KEYS.checkoutLoginLoopCount);
-    safeSessionRemove(STORAGE_KEYS.checkoutLoginLoopAt);
+function shouldBlockAuthRedirectLoop(rawTarget) {
+    const target = normalizeRedirectTarget(rawTarget);
+    if (!target) return false;
+    const state = getAuthRedirectLoopState();
+    return state.target === target && state.count >= AUTH_REDIRECT_LOOP_LIMIT;
+}
+
+function clearAuthRedirectLoopState() {
+    safeSessionRemove(STORAGE_KEYS.authRedirectLoopTarget);
+    safeSessionRemove(STORAGE_KEYS.authRedirectLoopCount);
+    safeSessionRemove(STORAGE_KEYS.authRedirectLoopAt);
 }
 
 function getSelectedPlan() {
@@ -785,13 +816,13 @@ async function initLoginPage() {
     try {
         const me = await requestJson("/api/auth/me");
         const hasRedirect = Boolean(String(params.get("redirect") || "").trim());
-        const loopState = getCheckoutLoginLoopState();
-        if (hasRedirect && loopState.count >= CHECKOUT_LOGIN_LOOP_LIMIT) {
-            clearCheckoutLoginLoopState();
-            setStatus("Session keeps bouncing. Sign in again to continue checkout.", true);
+        const redirectTarget = String(params.get("redirect") || "").trim();
+        if (hasRedirect && shouldBlockAuthRedirectLoop(redirectTarget)) {
+            clearAuthRedirectLoopState();
+            setStatus("Session keeps bouncing. Sign in again to continue.", true);
             return;
         }
-        clearCheckoutLoginLoopState();
+        clearAuthRedirectLoopState();
         window.location.href = resolveAuthRedirectTarget(me?.user || null);
         return;
     } catch (error) {
@@ -853,7 +884,7 @@ async function initLoginPage() {
             }
 
             setStatus("Success. Redirecting...", false);
-            clearCheckoutLoginLoopState();
+            clearAuthRedirectLoopState();
             window.location.href = resolveAuthRedirectTarget(authResult?.user || null);
         } catch (error) {
             setStatus(error.message || "Authentication failed.", true);
@@ -1972,7 +2003,7 @@ async function initCheckoutPage() {
             : `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
 
     function redirectToLogin() {
-        recordCheckoutLoginLoopBounce();
+        recordAuthRedirectLoopBounce(redirectTarget);
         window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
     }
 
@@ -2014,12 +2045,21 @@ async function initDashboardPage() {
     const dashboardRoot = qs(".dashboard-layout");
     if (!dashboardRoot) return;
 
+    const redirectTarget = "dashboard.html";
+
+    function redirectToLogin() {
+        recordAuthRedirectLoopBounce(redirectTarget);
+        window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
+    }
+
     let auth;
     try {
         const me = await requestJson("/api/auth/me");
         auth = me.user;
     } catch (error) {
-        window.location.href = "login.html?mode=signin&redirect=dashboard.html";
+        if (isUnauthorized(error)) {
+            redirectToLogin();
+        }
         return;
     }
 
