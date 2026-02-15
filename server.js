@@ -1205,11 +1205,16 @@ app.post("/api/auth/register", authLimiter, (req, res) => {
         .get(result.lastInsertRowid);
 
     req.session.userId = user.id;
-    req.session.save(() => undefined);
+    req.session.save((error) => {
+        if (error) {
+            req.log.error({ err: error, userId: user.id }, "Session save failed after register");
+            return res.status(500).json({ error: "Could not start a session. Try signing in again." });
+        }
 
-    addSecurityEvent(user.id, "auth_register", "low", "New account created", "Dashboard account created.", name, req.ip);
-    return res.status(201).json({
-        user: publicUser(user)
+        addSecurityEvent(user.id, "auth_register", "low", "New account created", "Dashboard account created.", name, req.ip);
+        return res.status(201).json({
+            user: publicUser(user)
+        });
     });
 });
 
@@ -1232,11 +1237,16 @@ app.post("/api/auth/login", authLimiter, (req, res) => {
     }
 
     req.session.userId = row.id;
-    req.session.save(() => undefined);
+    req.session.save((error) => {
+        if (error) {
+            req.log.error({ err: error, userId: row.id }, "Session save failed after login");
+            return res.status(500).json({ error: "Could not start a session. Try signing in again." });
+        }
 
-    addSecurityEvent(row.id, "auth_login", "low", "User signed in", "Dashboard sign-in completed.", row.display_name, req.ip);
-    return res.json({
-        user: publicUser(row)
+        addSecurityEvent(row.id, "auth_login", "low", "User signed in", "Dashboard sign-in completed.", row.display_name, req.ip);
+        return res.json({
+            user: publicUser(row)
+        });
     });
 });
 
