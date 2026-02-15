@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Radon</title>
+    <meta name="theme-color" content="#0B1220">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%233B82F6' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dashboard-page checkout-page">
+    <a class="skip-link" href="#checkout-main">Skip to content</a>
+    <header class="site-header">
+        <div class="container nav-wrap">
+            <a class="brand" href="index.html" aria-label="Radon home">
+                <svg viewBox="0 0 200 200" width="28" height="28" aria-hidden="true">
+                    <path d="M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <span>Radon</span>
+            </a>
+            <nav class="nav-links" aria-label="Checkout">
+                <ul>
+                    <li><a href="index.html#pricing">Pricing</a></li>
+                    <li><a href="login.html?mode=signin">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="checkout-main" class="checkout-main container">
+        <section class="checkout-grid">
+            <article class="card panel-card checkout-intro-card">
+                <p class="checkout-eyebrow">Secure Checkout</p>
+                <h1>Complete your Radon Lifetime payment</h1>
+                <p class="muted">Your selected coin is locked for this checkout session. Send payment, submit your transaction hash, and access unlocks after verification.</p>
+                <p class="muted checkout-selected-coin">Selected coin: <strong id="checkout-selected-coin">Ethereum</strong></p>
+            </article>
+
+            <form id="invoice-create-form" class="form-grid checkout-hidden-create" novalidate aria-hidden="true">
+                <label class="form-label" for="invoice-product">Product</label>
+                <select class="form-input" id="invoice-product" required></select>
+
+                <label class="form-label" for="invoice-coin">Payment</label>
+                <select class="form-input" id="invoice-coin" required>
+                    <option value="ETH">Ethereum</option>
+                    <option value="BTC">Bitcoin</option>
+                    <option value="SOL">Solana</option>
+                </select>
+
+                <button class="btn btn-primary" type="submit" id="create-invoice-btn">Create invoice</button>
+                <p class="muted crypto-status" id="invoice-create-status" aria-live="polite"></p>
+            </form>
+
+            <article class="card panel-card invoice-shell">
+                <div class="invoice-head-row">
+                    <div>
+                        <p class="invoice-meta-label">Invoice ID</p>
+                        <code class="invoice-id" id="invoice-id">--</code>
+                    </div>
+                    <div class="invoice-status-box">
+                        <p class="invoice-status" id="invoice-status">Awaiting Payment</p>
+                        <p class="invoice-timer"><span id="invoice-countdown">--:--</span> remaining</p>
+                    </div>
+                </div>
+
+                <div class="invoice-item">
+                    <h3 id="invoice-product-name">Radon Anti Cheat</h3>
+                    <p class="muted" id="invoice-product-term">Lifetime Access</p>
+                    <p class="invoice-amount" id="invoice-product-amount">$15.00</p>
+                </div>
+
+                <dl class="invoice-summary">
+                    <div>
+                        <dt>Date</dt>
+                        <dd id="invoice-date">--</dd>
+                    </div>
+                    <div>
+                        <dt>Payment</dt>
+                        <dd id="invoice-payment-coin">Ethereum</dd>
+                    </div>
+                    <div>
+                        <dt>Total</dt>
+                        <dd id="invoice-total">$15.00 USD</dd>
+                    </div>
+                    <div>
+                        <dt>Account</dt>
+                        <dd><span id="invoice-account-name">--</span> <span class="muted" id="invoice-account-email">--</span></dd>
+                    </div>
+                </dl>
+
+                <div class="invoice-instructions">
+                    <h4>Payment Instructions</h4>
+                    <p>Send <strong id="invoice-send-amount">$15.00 USD</strong> in <strong id="invoice-send-coin">Ethereum</strong> to:</p>
+                    <p class="muted" id="invoice-required-amount">Minimum accepted: --</p>
+                    <div class="wallet-row">
+                        <input class="form-input" type="text" id="invoice-wallet" readonly aria-readonly="true">
+                        <button class="btn btn-ghost" type="button" id="invoice-copy-wallet-btn">Copy</button>
+                    </div>
+                    <p class="muted inline-note" id="invoice-network-note">Use the correct network for the selected coin.</p>
+                    <a class="btn btn-ghost wallet-link-btn" id="invoice-wallet-link" href="#" target="_blank" rel="noopener">Open in wallet</a>
+                </div>
+
+                <div class="invoice-submit">
+                    <h4>Submit Transaction ID</h4>
+                    <p class="muted">Paste your transaction hash below so we can verify your payment.</p>
+                    <input class="form-input" type="text" id="invoice-txhash" placeholder="Enter transaction hash / ID">
+                    <button class="btn btn-primary" type="button" id="invoice-submit-btn">Submit transaction</button>
+                    <p class="muted crypto-status" id="invoice-submit-status" aria-live="polite"></p>
+                </div>
+
+                <div class="invoice-next">
+                    <h4>What happens next?</h4>
+                    <ul class="invoice-steps">
+                        <li>Complete the payment using the details above.</li>
+                        <li>Submit your transaction ID.</li>
+                        <li>Verification is nearly instant once payment is confirmed.</li>
+                        <li>Dashboard access unlocks after payment verification.</li>
+                    </ul>
+                </div>
+
+                <div class="invoice-actions">
+                    <a class="btn btn-ghost" href="index.html#pricing">Back to Pricing</a>
+                    <a class="btn btn-ghost" href="login.html?mode=signin">Use Another Account</a>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

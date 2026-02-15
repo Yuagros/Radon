@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radon - Roblox Anti-Cheat</title>
-    <meta name="theme-color" content="#ffd8e8">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%23d63f75' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <meta name="theme-color" content="#0B1220">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%233B82F6' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="home-page">
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
         <div class="container nav-wrap">
             <a class="brand" href="index.html" aria-label="Radon home">
@@ -18,48 +19,44 @@
                 <span>Radon</span>
             </a>
 
-            <button class="mobile-toggle" type="button" aria-label="Toggle navigation">
+            <button class="mobile-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-nav">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 12h18M3 6h18M3 18h18"></path>
                 </svg>
             </button>
 
-            <nav class="nav-links" aria-label="Primary">
+            <nav class="nav-links" id="primary-nav" aria-label="Primary">
                 <ul>
+                    <li><a href="#how-it-works">How It Works</a></li>
                     <li><a href="#features">Features</a></li>
+                    <li><a href="#testimonials">Testimonials</a></li>
                     <li><a href="#pricing">Pricing</a></li>
                     <li><a href="#faq">FAQ</a></li>
-                    <li><a class="btn btn-ghost" href="login.html">Login</a></li>
+                    <li id="nav-auth-slot"><a class="btn btn-ghost" id="nav-auth-link" href="login.html">Login</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <main>
+    <main id="main-content">
         <section class="hero container">
             <div class="hero-shell">
                 <div class="hero-main">
-                    <div class="hero-icon-build" aria-hidden="true">
-                        <svg class="hero-icon-build-svg" viewBox="0 0 200 200" width="138" height="138">
-                            <path class="build-segment segment-1" d="M100 30 L60 70"></path>
-                            <path class="build-segment segment-2" d="M60 70 L65 130"></path>
-                            <path class="build-segment segment-3" d="M65 130 L100 165"></path>
-                            <path class="build-segment segment-4" d="M100 165 L135 130"></path>
-                            <path class="build-segment segment-5" d="M135 130 L140 70"></path>
-                            <path class="build-segment segment-6" d="M140 70 L100 30"></path>
-                            <path class="build-core" d="M100 52 L78 78 L81 122 L100 142 L119 122 L122 78 Z"></path>
+                    <div class="hero-icon-build hero-icon-minimal" aria-hidden="true">
+                        <svg class="hero-icon-minimal-svg" viewBox="0 0 200 200" width="142" height="142">
+                            <circle class="minimal-ring" cx="100" cy="100" r="58"></circle>
+                            <path class="minimal-shield" d="M100 56 L78 78 L81 121 L100 140 L119 121 L122 78 Z"></path>
+                            <path class="minimal-cut" d="M100 73V125"></path>
                         </svg>
-                        <span class="petal petal-a"></span>
-                        <span class="petal petal-b"></span>
-                        <span class="petal petal-c"></span>
+                        <span class="minimal-sweep"></span>
                     </div>
 
                     <p class="eyebrow">Server-side anti-cheat for Roblox</p>
                     <h1>Keep gameplay fair with clear, reliable server checks.</h1>
                     <p class="hero-copy">Radon validates movement, remote activity, and action state so exploit attempts are stopped early and logged clearly.</p>
                     <div class="hero-actions">
-                        <a class="btn btn-primary" href="#pricing">Start Free Trial</a>
-                        <a class="btn btn-ghost" href="dashboard.html">View Dashboard</a>
+                        <a class="btn btn-primary" id="hero-primary-cta" href="checkout.html" data-open-checkout="true">Get Lifetime Access</a>
+                        <a class="btn btn-ghost" id="hero-dashboard-cta" href="dashboard.html" hidden>View Dashboard</a>
                     </div>
                     <ul class="hero-points">
                         <li>Movement and teleport checks</li>
@@ -68,27 +65,42 @@
                     </ul>
                 </div>
 
-                <aside class="hero-panel card" aria-label="Live trust snapshot">
-                    <p class="hero-panel-title">Live Trust Snapshot</p>
-                    <div class="hero-panel-grid">
-                        <article>
-                            <p class="hero-metric-label">Sessions scanned</p>
-                            <p class="hero-metric-value">8.1M</p>
-                        </article>
-                        <article>
-                            <p class="hero-metric-label">Blocked spikes</p>
-                            <p class="hero-metric-value">12.4K</p>
-                        </article>
-                        <article>
-                            <p class="hero-metric-label">Latency overhead</p>
-                            <p class="hero-metric-value">&lt; 0.8%</p>
-                        </article>
-                    </div>
-                    <div class="hero-panel-rail">
-                        <span>Threat confidence</span>
-                        <strong>99.8%</strong>
-                    </div>
-                </aside>
+            </div>
+        </section>
+
+        <section class="section container trust-logos" aria-label="Trusted teams">
+            <p class="trust-label">Trusted by competitive studios and live operations teams</p>
+            <div class="logo-row">
+                <span>Atlas Forge</span>
+                <span>Velocity Ops</span>
+                <span>ShardGrid</span>
+                <span>Nebula Labs</span>
+                <span>Riftline</span>
+                <span>Arcbyte</span>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="section container">
+            <div class="section-head">
+                <h2>How it works</h2>
+                <p class="muted">Built for Roblox environments, even when external access is limited.</p>
+            </div>
+            <div class="how-grid">
+                <article class="card how-card">
+                    <p class="how-step">Step 1</p>
+                    <h3>Run checks inside your server</h3>
+                    <p>Place Radon in your Roblox server scripts to validate movement, remotes, and player state directly in-game.</p>
+                </article>
+                <article class="card how-card">
+                    <p class="how-step">Step 2</p>
+                    <h3>Detect and log locally first</h3>
+                    <p>If outbound access is restricted, Radon still records structured detections so you can review or export them later.</p>
+                </article>
+                <article class="card how-card">
+                    <p class="how-step">Step 3</p>
+                    <h3>Enforce immediately</h3>
+                    <p>Trigger warn, kick, or ban actions in real time. When dashboard sync is available, those same events are easy to review.</p>
+                </article>
             </div>
         </section>
 
@@ -130,49 +142,47 @@
 
         <section id="pricing" class="section container">
             <div class="section-head">
-                <h2>Simple pricing</h2>
-                <p class="muted">Pick a plan, sign in, and start from the dashboard.</p>
+                <h2>One-Time Pricing</h2>
+                <p class="muted">Single purchase, lifetime access.</p>
             </div>
 
-            <div class="card-grid three-up">
-                <article class="card pricing-card">
+            <div class="card-grid single-plan-grid">
+                <article class="card pricing-card featured lifetime-card">
                     <div class="pricing-card-inner">
-                        <h3>Starter</h3>
-                        <p class="price">$19<span>/mo</span></p>
+                        <p class="pricing-pill">Lifetime</p>
+                        <h3>Radon Lifetime</h3>
+                        <p class="price">$15<span>one-time</span></p>
                         <ul>
-                            <li>Core validation rules</li>
-                            <li>14-day logs</li>
-                            <li>Email support</li>
+                            <li>Full dashboard access</li>
+                            <li>All anti-cheat modules</li>
+                            <li>Future updates included</li>
                         </ul>
-                        <a class="btn btn-primary choose-plan-btn" href="login.html" data-plan="Starter">Choose Plan</a>
+                        <a class="btn btn-primary choose-plan-btn" href="checkout.html" data-plan="Lifetime" data-open-checkout="true">Get Lifetime Access</a>
                     </div>
                 </article>
+            </div>
+        </section>
 
-                <article class="card pricing-card featured">
-                    <div class="pricing-card-inner">
-                        <p class="pricing-pill">Most Popular</p>
-                        <h3>Pro</h3>
-                        <p class="price">$49<span>/mo</span></p>
-                        <ul>
-                            <li>Advanced rule tuning</li>
-                            <li>90-day logs</li>
-                            <li>Priority support</li>
-                        </ul>
-                        <a class="btn btn-primary choose-plan-btn" href="login.html" data-plan="Pro">Choose Plan</a>
-                    </div>
+        <section id="testimonials" class="section container">
+            <div class="section-head">
+                <h2>What teams say</h2>
+                <p class="muted">Studios use Radon to reduce exploit noise without slowing development.</p>
+            </div>
+            <div class="testimonial-grid">
+                <article class="card testimonial-card">
+                    <p>"We cut exploit reports by 63% in our first month while keeping moderation evidence clean."</p>
+                    <strong>Ada Lin</strong>
+                    <span class="muted">Security Lead, Atlas Forge</span>
                 </article>
-
-                <article class="card pricing-card">
-                    <div class="pricing-card-inner">
-                        <h3>Enterprise</h3>
-                        <p class="price">$149<span>/mo</span></p>
-                        <ul>
-                            <li>Custom policies</li>
-                            <li>365-day logs</li>
-                            <li>Dedicated support</li>
-                        </ul>
-                        <a class="btn btn-primary choose-plan-btn" href="login.html" data-plan="Enterprise">Contact Sales</a>
-                    </div>
+                <article class="card testimonial-card">
+                    <p>"The server-side checks are lightweight, and the dashboard gives us confidence during peak events."</p>
+                    <strong>Marco Diaz</strong>
+                    <span class="muted">Live Ops, Riftline</span>
+                </article>
+                <article class="card testimonial-card">
+                    <p>"Crypto billing verification saved manual review time because every submitted hash is validated."</p>
+                    <strong>Nia Walker</strong>
+                    <span class="muted">Producer, Arcbyte</span>
                 </article>
             </div>
         </section>
@@ -213,6 +223,58 @@
             <p>&copy; 2026 Radon. All rights reserved.</p>
         </div>
     </footer>
+
+    <a class="sticky-cta" id="sticky-cta" href="checkout.html" data-open-checkout="true">Get Lifetime Access</a>
+
+    <section class="checkout-modal" id="checkout-modal" hidden aria-hidden="true">
+        <div class="checkout-modal-backdrop" data-close-checkout-modal="true"></div>
+        <div class="checkout-modal-dialog card" role="dialog" aria-modal="true" aria-labelledby="checkout-modal-title">
+            <button class="checkout-modal-close" type="button" aria-label="Close checkout options" data-close-checkout-modal="true">x</button>
+            <p class="checkout-modal-eyebrow">Lifetime Plan</p>
+            <h2 id="checkout-modal-title">Select your crypto payment method</h2>
+            <p class="muted">Choose a coin and continue directly to your invoice checkout.</p>
+            <fieldset class="checkout-coin-grid" id="checkout-coin-group">
+                <legend class="sr-only">Select payment coin</legend>
+                <label class="checkout-coin-option">
+                    <input type="radio" name="checkout-coin" value="ETH" checked>
+                    <span class="checkout-coin-icon checkout-coin-icon-eth" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                            <path d="M12 2L6.7 12L12 9.2L17.3 12L12 2Z"></path>
+                            <path d="M12 22L6.7 13.2L12 16L17.3 13.2L12 22Z"></path>
+                        </svg>
+                    </span>
+                    <span class="checkout-coin-text">Ethereum (ETH)</span>
+                </label>
+                <label class="checkout-coin-option">
+                    <input type="radio" name="checkout-coin" value="BTC">
+                    <span class="checkout-coin-icon checkout-coin-icon-btc" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9 7.3H12.8C14.6 7.3 15.5 8.2 15.5 9.5C15.5 10.7 14.8 11.4 13.7 11.7C15.1 12 16 12.9 16 14.4C16 16 14.8 17 12.8 17H9V7.3Z"></path>
+                            <path d="M10.8 6V18"></path>
+                            <path d="M13.2 6V18"></path>
+                        </svg>
+                    </span>
+                    <span class="checkout-coin-text">Bitcoin (BTC)</span>
+                </label>
+                <label class="checkout-coin-option">
+                    <input type="radio" name="checkout-coin" value="SOL">
+                    <span class="checkout-coin-icon checkout-coin-icon-sol" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                            <path d="M6 6.5H18L15.8 8.7H3.8L6 6.5Z"></path>
+                            <path d="M8.2 10.9H20.2L18 13.1H6L8.2 10.9Z"></path>
+                            <path d="M6 15.3H18L15.8 17.5H3.8L6 15.3Z"></path>
+                        </svg>
+                    </span>
+                    <span class="checkout-coin-text">Solana (SOL)</span>
+                </label>
+            </fieldset>
+            <p class="muted checkout-modal-status" id="checkout-modal-status" aria-live="polite"></p>
+            <div class="checkout-modal-actions">
+                <button class="btn btn-primary" type="button" id="checkout-proceed-btn">Proceed to Payment</button>
+            </div>
+        </div>
+    </section>
 
     <script src="script.js"></script>
 </body>

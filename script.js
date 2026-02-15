@@ -1,22 +1,32 @@
 const STORAGE_KEYS = {
     plan: "radon_selected_plan",
-    auth: "radon_auth",
     rememberedEmail: "radon_remembered_email",
-    accounts: "radon_accounts",
-    cryptoRequests: "radon_crypto_requests"
+    selectedProduct: "radon_selected_product",
+    selectedCoin: "radon_selected_coin"
 };
 
-const CRYPTO_WALLETS = {
+const DEFAULT_WALLETS = {
     ETH: "0x9D575B4e92063BD6FA3e5b478Fa5EBFc8d531241",
-    BTC: "bc1qlluym8r3tr3cql9eatng7ydy050d526m8g9e4n",
+    BTC: "bc1p0wpgtfk3h6zv98had7kzfvgte4l237cmmt0sads7jg7n47lcknxsf0n2st",
     SOL: "7ykaKV7RtPnHpckJBH5p3rxmSdAP1Z2598BmbqeuHK7Y"
 };
 
-const CRYPTO_NETWORKS = {
+const NETWORK_LABELS = {
     ETH: "Ethereum mainnet",
     BTC: "Bitcoin mainnet",
     SOL: "Solana mainnet"
 };
+
+const PLAN_PRICES = {
+    Lifetime: 15
+};
+
+function normalizeCoin(value) {
+    const normalized = String(value || "")
+        .trim()
+        .toUpperCase();
+    return ["ETH", "BTC", "SOL"].includes(normalized) ? normalized : "";
+}
 
 function qs(selector) {
     return document.querySelector(selector);
@@ -50,49 +60,183 @@ function safeRemove(key) {
     }
 }
 
-function safeReadJson(key, fallback) {
-    const raw = safeRead(key);
-    if (!raw) return fallback;
-    try {
-        return JSON.parse(raw);
-    } catch (error) {
-        return fallback;
-    }
-}
-
-function safeWriteJson(key, value) {
-    safeWrite(key, JSON.stringify(value));
-}
-
-function normalizeEmail(email) {
-    return String(email || "").trim().toLowerCase();
-}
-
 function getSelectedPlan() {
-    return safeRead(STORAGE_KEYS.plan) || "Starter";
+    const saved = safeRead(STORAGE_KEYS.plan) || "Lifetime";
+    return Object.prototype.hasOwnProperty.call(PLAN_PRICES, saved) ? saved : "Lifetime";
 }
 
-function getAccounts() {
-    const value = safeReadJson(STORAGE_KEYS.accounts, []);
-    return Array.isArray(value) ? value : [];
+function setSelectedPlan(plan) {
+    if (!Object.prototype.hasOwnProperty.call(PLAN_PRICES, plan)) return;
+    safeWrite(STORAGE_KEYS.plan, plan);
 }
 
-function saveAccounts(accounts) {
-    safeWriteJson(STORAGE_KEYS.accounts, accounts);
+function initialsFromName(name) {
+    const parts = String(name || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (!parts.length) return "R";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
-function findAccountByEmail(email) {
-    const normalized = normalizeEmail(email);
-    return getAccounts().find((account) => normalizeEmail(account.email) === normalized) || null;
-}
+function renderAvatar(node, user, fallbackName = "User") {
+    if (!(node instanceof HTMLElement)) return;
 
-function setAuthSession(account, planOverride) {
-    safeWriteJson(STORAGE_KEYS.auth, {
-        email: normalizeEmail(account.email),
-        name: account.name || "",
-        plan: planOverride || getSelectedPlan(),
-        loggedInAt: new Date().toISOString()
+    const displayName = String(user?.name || fallbackName || "User").trim() || "User";
+    const initials = initialsFromName(displayName);
+    const avatarUrl = String(user?.avatarUrl || "").trim();
+
+    node.replaceChildren();
+    node.classList.remove("has-image");
+
+    if (!avatarUrl) {
+        node.textContent = initials;
+        return;
+    }
+
+    const img = document.createElement("img");
+    img.className = "avatar-image";
+    img.src = avatarUrl;
+    img.alt = `${displayName} avatar`;
+    img.referrerPolicy = "no-referrer";
+    img.loading = "lazy";
+    img.decoding = "async";
+
+    img.addEventListener("error", () => {
+        node.replaceChildren();
+        node.classList.remove("has-image");
+        node.textContent = initials;
     });
+
+    node.classList.add("has-image");
+    node.appendChild(img);
+}
+
+function isUnauthorized(error) {
+    return Boolean(error && typeof error === "object" && "status" in error && error.status === 401);
+}
+
+async function requestJson(url, options = {}) {
+    const request = {
+        method: options.method || "GET",
+        headers: {
+            Accept: "application/json",
+            ...(options.headers || {})
+        },
+        credentials: "same-origin"
+    };
+
+    if (options.body !== undefined) {
+        request.headers["Content-Type"] = "application/json";
+        request.body = JSON.stringify(options.body);
+    }
+
+    let response;
+    try {
+        response = await fetch(url, request);
+    } catch (networkError) {
+        const error = new Error("Network request failed.");
+        error.status = 0;
+        throw error;
+    }
+
+    let payload = null;
+    try {
+        payload = await response.json();
+    } catch (parseError) {
+        payload = null;
+    }
+
+    if (!response.ok) {
+        const error = new Error(payload?.error || "Request failed.");
+        error.status = response.status;
+        error.payload = payload;
+        throw error;
+    }
+
+    return payload;
+}
+
+function formatNumber(value) {
+    const safe = Number(value || 0);
+    return new Intl.NumberFormat("en-US").format(safe);
+}
+
+function formatCurrency(value) {
+    const safe = Number(value || 0);
+    return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+    }).format(safe);
+}
+
+function formatCurrencyPrecise(value) {
+    const safe = Number(value || 0);
+    return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(safe);
+}
+
+function formatPercent(value, digits = 2) {
+    const safe = Number(value || 0);
+    return `${safe.toFixed(digits)}%`;
+}
+
+function formatRelativeTime(isoDate) {
+    if (!isoDate) return "--";
+    const date = new Date(isoDate);
+    const delta = Date.now() - date.getTime();
+    const seconds = Math.max(0, Math.floor(delta / 1000));
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+}
+
+function truncate(text, maxLength) {
+    const value = String(text || "");
+    if (value.length <= maxLength) return value;
+    return `${value.slice(0, maxLength - 1)}...`;
+}
+
+function escapeHtml(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function severityBadge(severity) {
+    const normalized = String(severity || "").toLowerCase();
+    if (["critical", "high"].includes(normalized)) return "sev-high";
+    if (normalized === "medium") return "sev-medium";
+    return "sev-low";
+}
+
+function walletUri(coin, wallet) {
+    if (!wallet) return "";
+    if (coin === "ETH") return `ethereum:${wallet}`;
+    if (coin === "BTC") return `bitcoin:${wallet}`;
+    if (coin === "SOL") return `solana:${wallet}`;
+    return "";
+}
+
+function setElementText(selector, value) {
+    const node = qs(selector);
+    if (node) {
+        node.textContent = value;
+    }
 }
 
 function initMobileNav() {
@@ -101,12 +245,33 @@ function initMobileNav() {
 
     if (!toggle || !nav) return;
 
+    const closeNav = () => {
+        nav.classList.remove("active");
+        toggle.setAttribute("aria-expanded", "false");
+    };
+
+    const openNav = () => {
+        nav.classList.add("active");
+        toggle.setAttribute("aria-expanded", "true");
+    };
+
     toggle.addEventListener("click", () => {
-        nav.classList.toggle("active");
+        const isOpen = nav.classList.contains("active");
+        if (isOpen) {
+            closeNav();
+        } else {
+            openNav();
+        }
     });
 
     qsa(".nav-links a").forEach((link) => {
-        link.addEventListener("click", () => nav.classList.remove("active"));
+        link.addEventListener("click", closeNav);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeNav();
+        }
     });
 }
 
@@ -114,14 +279,13 @@ function initFaq() {
     qsa(".faq-item").forEach((item) => {
         const question = item.querySelector(".faq-question");
         const answer = item.querySelector(".faq-answer");
-
         if (!question || !answer) return;
 
         question.addEventListener("click", () => {
             const isOpen = item.classList.contains("open");
             item.classList.toggle("open", !isOpen);
             question.setAttribute("aria-expanded", String(!isOpen));
-            answer.style.maxHeight = isOpen ? "" : answer.scrollHeight + "px";
+            answer.style.maxHeight = isOpen ? "" : `${answer.scrollHeight}px`;
         });
     });
 }
@@ -131,12 +295,293 @@ function initPlanSelection() {
         button.addEventListener("click", () => {
             const plan = button.getAttribute("data-plan");
             if (!plan) return;
-            safeWrite(STORAGE_KEYS.plan, plan);
+            setSelectedPlan(plan);
         });
     });
 }
 
-function initLoginPage() {
+function initCheckoutModal() {
+    const modal = qs("#checkout-modal");
+    if (!(modal instanceof HTMLElement)) return;
+
+    const proceedButton = qs("#checkout-proceed-btn");
+    const status = qs("#checkout-modal-status");
+    const openButtons = qsa("[data-open-checkout]");
+    const closeButtons = qsa("[data-close-checkout-modal]");
+    let lastFocusedElement = null;
+
+    function setModalStatus(message, isError) {
+        if (!status) return;
+        status.textContent = message;
+        status.style.color = isError ? "#ff9db2" : "";
+    }
+
+    function getSelectedCoin() {
+        const checked = qs('input[name="checkout-coin"]:checked');
+        if (checked instanceof HTMLInputElement) {
+            return normalizeCoin(checked.value) || "ETH";
+        }
+        return "ETH";
+    }
+
+    function syncCoinSelectionState() {
+        qsa(".checkout-coin-option").forEach((label) => {
+            if (!(label instanceof HTMLElement)) return;
+            const input = label.querySelector('input[name="checkout-coin"]');
+            const active = input instanceof HTMLInputElement && input.checked;
+            label.classList.toggle("is-selected", Boolean(active));
+        });
+    }
+
+    function setSelectedCoin(coin) {
+        const normalized = normalizeCoin(coin) || "ETH";
+        const option = qs(`input[name="checkout-coin"][value="${normalized}"]`);
+        if (option instanceof HTMLInputElement) {
+            option.checked = true;
+        }
+        syncCoinSelectionState();
+    }
+
+    function openModal() {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setSelectedCoin(safeRead(STORAGE_KEYS.selectedCoin));
+        setModalStatus("", false);
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("checkout-modal-open");
+        const firstOption = qs('input[name="checkout-coin"]:checked');
+        if (firstOption instanceof HTMLInputElement) {
+            firstOption.focus();
+        }
+    }
+
+    function closeModal() {
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("checkout-modal-open");
+        setModalStatus("", false);
+        if (lastFocusedElement instanceof HTMLElement) {
+            lastFocusedElement.focus();
+        }
+    }
+
+    openButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            if (!(button instanceof HTMLElement) || !button.hasAttribute("data-open-checkout")) return;
+            event.preventDefault();
+            setSelectedPlan("Lifetime");
+            openModal();
+        });
+    });
+
+    closeButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            closeModal();
+        });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !modal.hidden) {
+            closeModal();
+        }
+    });
+
+    qsa('input[name="checkout-coin"]').forEach((input) => {
+        input.addEventListener("change", () => {
+            syncCoinSelectionState();
+        });
+    });
+
+    if (proceedButton) {
+        proceedButton.addEventListener("click", () => {
+            const coin = getSelectedCoin();
+            safeWrite(STORAGE_KEYS.selectedCoin, coin);
+            setModalStatus("Opening checkout...", false);
+            window.location.href = `checkout.html?coin=${encodeURIComponent(coin)}`;
+        });
+    }
+}
+
+async function initHomeAuthNav() {
+    const authLink = qs("#nav-auth-link");
+    if (!(authLink instanceof HTMLAnchorElement)) return;
+    const primaryCta = qs("#hero-primary-cta");
+    const dashboardCta = qs("#hero-dashboard-cta");
+    const stickyCta = qs("#sticky-cta");
+
+    function setCheckoutTrigger(node, enabled) {
+        if (!(node instanceof HTMLAnchorElement)) return;
+        if (enabled) {
+            node.setAttribute("data-open-checkout", "true");
+        } else {
+            node.removeAttribute("data-open-checkout");
+        }
+    }
+
+    function setHomeCtas({
+        primaryHref,
+        primaryText,
+        stickyHref,
+        stickyText,
+        dashboardHref,
+        dashboardText,
+        showDashboard,
+        openCheckout
+    }) {
+        if (primaryCta instanceof HTMLAnchorElement) {
+            primaryCta.href = primaryHref;
+            primaryCta.textContent = primaryText;
+            setCheckoutTrigger(primaryCta, Boolean(openCheckout));
+        }
+        if (stickyCta instanceof HTMLAnchorElement) {
+            stickyCta.href = stickyHref;
+            stickyCta.textContent = stickyText;
+            setCheckoutTrigger(stickyCta, Boolean(openCheckout));
+        }
+        if (dashboardCta instanceof HTMLAnchorElement) {
+            dashboardCta.hidden = !showDashboard;
+            dashboardCta.href = dashboardHref;
+            dashboardCta.textContent = dashboardText;
+        }
+    }
+
+    function setLoggedOutState() {
+        authLink.href = "login.html";
+        authLink.classList.remove("profile-nav-link");
+        authLink.classList.add("btn", "btn-ghost");
+        authLink.replaceChildren(document.createTextNode("Login"));
+        setHomeCtas({
+            primaryHref: "checkout.html",
+            primaryText: "Get Lifetime Access",
+            stickyHref: "checkout.html",
+            stickyText: "Get Lifetime Access",
+            dashboardHref: "dashboard.html",
+            dashboardText: "View Dashboard",
+            showDashboard: false,
+            openCheckout: true
+        });
+    }
+
+    try {
+        const me = await requestJson("/api/auth/me");
+        const user = me?.user || null;
+        if (!user) {
+            setLoggedOutState();
+            return;
+        }
+
+        const avatar = document.createElement("span");
+        avatar.className = "profile-nav-avatar";
+
+        const name = document.createElement("span");
+        name.className = "profile-nav-name";
+        name.textContent = user.name || "User";
+
+        const hasPaidAccess = Boolean(user.hasPaidAccess);
+
+        authLink.href = hasPaidAccess ? "dashboard.html" : "checkout.html";
+        authLink.classList.remove("btn", "btn-ghost");
+        authLink.classList.add("profile-nav-link");
+        authLink.replaceChildren(avatar, name);
+        renderAvatar(avatar, user, user.name || "User");
+
+        if (hasPaidAccess) {
+            setHomeCtas({
+                primaryHref: "dashboard.html#settings",
+                primaryText: "Manage Account",
+                stickyHref: "dashboard.html",
+                stickyText: "Open Dashboard",
+                dashboardHref: "dashboard.html",
+                dashboardText: "View Dashboard",
+                showDashboard: true,
+                openCheckout: false
+            });
+        } else {
+            setHomeCtas({
+                primaryHref: "checkout.html",
+                primaryText: "Complete Checkout",
+                stickyHref: "checkout.html",
+                stickyText: "Complete Checkout",
+                dashboardHref: "dashboard.html",
+                dashboardText: "View Dashboard",
+                showDashboard: false,
+                openCheckout: true
+            });
+        }
+    } catch (error) {
+        setLoggedOutState();
+    }
+}
+
+function initHomeIconIntro() {
+    const body = document.body;
+    if (!body || !body.classList.contains("home-page")) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    body.classList.remove("icon-intro");
+    window.requestAnimationFrame(() => {
+        body.classList.add("icon-intro");
+    });
+
+    window.setTimeout(() => {
+        body.classList.remove("icon-intro");
+    }, 2600);
+}
+
+function initHomeScrollReveal() {
+    const body = document.body;
+    if (!body || !body.classList.contains("home-page")) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const targets = qsa(
+        ".home-page .section, .home-page .hero-panel, .home-page .clean-feature, .home-page .pricing-card, .home-page .testimonial-card"
+    );
+    if (!targets.length) return;
+
+    if (!("IntersectionObserver" in window)) {
+        targets.forEach((node) => node.classList.add("is-visible"));
+        return;
+    }
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            });
+        },
+        {
+            threshold: 0.16,
+            rootMargin: "0px 0px -8% 0px"
+        }
+    );
+
+    targets.forEach((node, index) => {
+        node.style.setProperty("--reveal-delay", `${Math.min(index * 45, 280)}ms`);
+        observer.observe(node);
+    });
+}
+
+function resolveAuthRedirectTarget(user) {
+    const params = new URLSearchParams(window.location.search);
+    const raw = String(params.get("redirect") || "").trim();
+    if (raw) {
+        try {
+            const parsed = new URL(raw, window.location.origin);
+            if (parsed.origin === window.location.origin && parsed.pathname.endsWith(".html")) {
+                return `${parsed.pathname.replace(/^\//, "")}${parsed.search}${parsed.hash}`;
+            }
+        } catch (error) {
+            /* ignore invalid redirect and use defaults */
+        }
+    }
+
+    return user?.hasPaidAccess ? "dashboard.html" : "checkout.html";
+}
+
+async function initLoginPage() {
     const form = qs("#auth-form");
     if (!form) return;
 
@@ -160,51 +605,45 @@ function initLoginPage() {
     function setStatus(message, isError) {
         if (!status) return;
         status.textContent = message;
-        status.style.color = isError ? "#fb7185" : "";
+        status.style.color = isError ? "#ff9db2" : "";
     }
 
     function setMode(nextMode) {
         mode = nextMode === "signin" ? "signin" : "create";
 
         modeButtons.forEach((button) => {
-            const isActive = button.getAttribute("data-auth-mode") === mode;
-            button.classList.toggle("active", isActive);
-            button.setAttribute("aria-selected", String(isActive));
+            const active = button.getAttribute("data-auth-mode") === mode;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-selected", String(active));
         });
 
         if (title) {
             title.textContent = mode === "create" ? "Create account" : "Sign in";
         }
-
         if (subtitle) {
             subtitle.textContent =
                 mode === "create"
                     ? "Set up your Radon dashboard access."
                     : "Continue to your Radon dashboard.";
         }
-
         if (submitBtn) {
             submitBtn.textContent = mode === "create" ? "Create account" : "Sign in";
         }
 
-        if (nameRow) {
-            nameRow.hidden = mode !== "create";
-        }
-
-        if (confirmRow) {
-            confirmRow.hidden = mode !== "create";
-        }
+        if (nameRow) nameRow.hidden = mode !== "create";
+        if (confirmRow) confirmRow.hidden = mode !== "create";
 
         if (nameInput instanceof HTMLInputElement) {
             nameInput.required = mode === "create";
         }
-
         if (confirmInput instanceof HTMLInputElement) {
             confirmInput.required = mode === "create";
         }
-
         setStatus("", false);
     }
+
+    const queryMode = new URLSearchParams(window.location.search).get("mode");
+    setMode(queryMode === "signin" ? "signin" : "create");
 
     modeButtons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -212,11 +651,8 @@ function initLoginPage() {
         });
     });
 
-    const queryMode = new URLSearchParams(window.location.search).get("mode");
-    setMode(queryMode === "signin" ? "signin" : "create");
-
     if (selectedPlanEl) {
-        selectedPlanEl.textContent = "Selected plan: " + getSelectedPlan();
+        selectedPlanEl.textContent = `Selected plan: ${getSelectedPlan()}`;
     }
 
     const rememberedEmail = safeRead(STORAGE_KEYS.rememberedEmail);
@@ -227,7 +663,17 @@ function initLoginPage() {
         }
     }
 
-    form.addEventListener("submit", (event) => {
+    try {
+        const me = await requestJson("/api/auth/me");
+        window.location.href = resolveAuthRedirectTarget(me?.user || null);
+        return;
+    } catch (error) {
+        if (!isUnauthorized(error)) {
+            setStatus("Could not reach the auth service. Try again.", true);
+        }
+    }
+
+    form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
@@ -248,72 +694,63 @@ function initLoginPage() {
 
         if (mode === "create") {
             if (name.length < 2) {
-                setStatus("Use a display name with at least 2 characters.", true);
+                setStatus("Display name must be at least 2 characters.", true);
                 return;
             }
-
             if (password.length < 8) {
                 setStatus("Password must be at least 8 characters.", true);
                 return;
             }
-
             if (password !== confirmPassword) {
                 setStatus("Passwords do not match.", true);
                 return;
             }
+        }
 
-            if (findAccountByEmail(email)) {
-                setStatus("That account already exists. Sign in instead.", true);
-                return;
+        submitBtn?.setAttribute("disabled", "true");
+        setStatus(mode === "create" ? "Creating account..." : "Signing in...", false);
+
+        try {
+            let authResult = null;
+            if (mode === "create") {
+                const selectedPlan = getSelectedPlan();
+                authResult = await requestJson("/api/auth/register", {
+                    method: "POST",
+                    body: { name, email, password, plan: selectedPlan }
+                });
+            } else {
+                authResult = await requestJson("/api/auth/login", {
+                    method: "POST",
+                    body: { email, password }
+                });
             }
 
-            const account = {
-                name,
-                email: normalizeEmail(email),
-                password,
-                createdAt: new Date().toISOString()
-            };
-
-            const accounts = getAccounts();
-            accounts.push(account);
-            saveAccounts(accounts);
-            setAuthSession(account, getSelectedPlan());
-            setStatus("Account created. Redirecting...", false);
-            window.location.href = "dashboard.html";
-            return;
+            setStatus("Success. Redirecting...", false);
+            window.location.href = resolveAuthRedirectTarget(authResult?.user || null);
+        } catch (error) {
+            setStatus(error.message || "Authentication failed.", true);
+        } finally {
+            submitBtn?.removeAttribute("disabled");
         }
-
-        const account = findAccountByEmail(email);
-        if (!account) {
-            setStatus("No account found for that email. Create one first.", true);
-            return;
-        }
-
-        if (account.password !== password) {
-            setStatus("Incorrect password.", true);
-            return;
-        }
-
-        setAuthSession(account, getSelectedPlan());
-        setStatus("Signed in. Redirecting...", false);
-        window.location.href = "dashboard.html";
     });
 }
 
 function initDashboardSidebar() {
     const toggle = qs(".menu-toggle");
     const sidebar = qs(".sidebar");
-
     if (!toggle || !sidebar) return;
 
     toggle.addEventListener("click", () => {
-        sidebar.classList.toggle("open");
+        const willOpen = !sidebar.classList.contains("open");
+        sidebar.classList.toggle("open", willOpen);
+        toggle.setAttribute("aria-expanded", String(willOpen));
     });
 
     qsa(".sidebar-nav .nav-item").forEach((item) => {
         item.addEventListener("click", () => {
             if (window.innerWidth <= 960) {
                 sidebar.classList.remove("open");
+                toggle.setAttribute("aria-expanded", "false");
             }
         });
     });
@@ -321,7 +758,6 @@ function initDashboardSidebar() {
     document.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
-
         if (
             window.innerWidth <= 960 &&
             sidebar.classList.contains("open") &&
@@ -329,12 +765,13 @@ function initDashboardSidebar() {
             !toggle.contains(target)
         ) {
             sidebar.classList.remove("open");
+            toggle.setAttribute("aria-expanded", "false");
         }
     });
 }
 
 function initDashboardTabs() {
-    const navItems = qsa(".sidebar-nav [data-tab-target]");
+    const navItems = qsa(".sidebar-nav [data-tab-target]").filter((item) => !item.hidden);
     const panels = qsa(".dash-panel[data-tab-panel]");
     if (!navItems.length || !panels.length) return;
 
@@ -348,20 +785,20 @@ function initDashboardTabs() {
         if (!validTargets.has(tabName)) return;
 
         navItems.forEach((item) => {
-            const isActive = item.getAttribute("data-tab-target") === tabName;
-            item.classList.toggle("active", isActive);
-            item.setAttribute("aria-current", isActive ? "page" : "false");
+            const active = item.getAttribute("data-tab-target") === tabName;
+            item.classList.toggle("active", active);
+            item.setAttribute("aria-current", active ? "page" : "false");
         });
 
         panels.forEach((panel) => {
-            const isActive = panel.getAttribute("data-tab-panel") === tabName;
-            panel.hidden = !isActive;
-            panel.classList.toggle("is-active", isActive);
+            const active = panel.getAttribute("data-tab-panel") === tabName;
+            panel.hidden = !active;
+            panel.classList.toggle("is-active", active);
         });
 
         if (updateHash) {
             if (history.replaceState) {
-                history.replaceState(null, "", "#" + tabName);
+                history.replaceState(null, "", `#${tabName}`);
             } else {
                 window.location.hash = tabName;
             }
@@ -371,27 +808,272 @@ function initDashboardTabs() {
     navItems.forEach((item) => {
         item.addEventListener("click", (event) => {
             event.preventDefault();
-            const targetTab = item.getAttribute("data-tab-target");
-            if (!targetTab) return;
-            setActiveTab(targetTab, true);
+            const target = item.getAttribute("data-tab-target");
+            if (!target) return;
+            setActiveTab(target, true);
         });
     });
 
     const initialHash = window.location.hash.replace("#", "");
-    const defaultTab = navItems[0].getAttribute("data-tab-target") || "overview";
-    setActiveTab(validTargets.has(initialHash) ? initialHash : defaultTab, false);
+    const fallback = navItems[0].getAttribute("data-tab-target") || "overview";
+    setActiveTab(validTargets.has(initialHash) ? initialHash : fallback, false);
 }
 
-function storeCryptoRequest(payload) {
-    const requests = safeReadJson(STORAGE_KEYS.cryptoRequests, []);
-    const safeRequests = Array.isArray(requests) ? requests : [];
-    safeRequests.unshift(payload);
-    safeWriteJson(STORAGE_KEYS.cryptoRequests, safeRequests.slice(0, 30));
+function drawLineChart(canvas, labels, values) {
+    if (!(canvas instanceof HTMLCanvasElement)) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = 28;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+    const maxValue = Math.max(1, ...values);
+    const step = values.length > 1 ? chartWidth / (values.length - 1) : chartWidth;
+
+    ctx.strokeStyle = "rgba(122, 142, 255, 0.22)";
+    ctx.lineWidth = 1;
+    for (let tick = 0; tick <= 4; tick += 1) {
+        const y = padding + (chartHeight / 4) * tick;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+    }
+
+    ctx.beginPath();
+    values.forEach((value, index) => {
+        const x = padding + step * index;
+        const y = padding + chartHeight - (value / maxValue) * chartHeight;
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+    ctx.strokeStyle = "#7c8fff";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    values.forEach((value, index) => {
+        const x = padding + step * index;
+        const y = padding + chartHeight - (value / maxValue) * chartHeight;
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#b8c2ff";
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(210, 219, 255, 0.88)";
+        ctx.font = "12px Manrope, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(labels[index] || ""), x, height - 8);
+    });
+}
+
+function drawBarChart(canvas, values) {
+    if (!(canvas instanceof HTMLCanvasElement)) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = 20;
+    const maxValue = Math.max(1, ...values);
+    const gap = 10;
+    const barWidth = (width - padding * 2 - gap * (values.length - 1)) / Math.max(1, values.length);
+
+    values.forEach((value, index) => {
+        const ratio = value / maxValue;
+        const barHeight = Math.max(4, ratio * (height - padding * 2));
+        const x = padding + index * (barWidth + gap);
+        const y = height - padding - barHeight;
+
+        ctx.fillStyle = "rgba(104, 224, 176, 0.86)";
+        ctx.fillRect(x, y, barWidth, barHeight);
+    });
+}
+
+function renderEventsTable(events, selector) {
+    const body = qs(selector);
+    if (!body) return;
+
+    if (!Array.isArray(events) || !events.length) {
+        body.innerHTML = '<tr><td colspan="4" class="table-empty">No events yet.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = events
+        .map((event) => {
+            const badge = severityBadge(event.severity);
+            const actor = event.actor || "system";
+            const title = escapeHtml(truncate(event.title, 56));
+            const severityText = escapeHtml(String(event.severity || "low").toUpperCase());
+            const actorText = escapeHtml(truncate(actor, 22));
+            const whenText = escapeHtml(formatRelativeTime(event.created_at));
+            return `
+                <tr>
+                    <td>${title}</td>
+                    <td><span class="sev-pill ${badge}">${severityText}</span></td>
+                    <td>${actorText}</td>
+                    <td>${whenText}</td>
+                </tr>
+            `;
+        })
+        .join("");
+}
+
+function renderPaymentsTable(payments, selector) {
+    const body = qs(selector);
+    if (!body) return;
+
+    if (!Array.isArray(payments) || !payments.length) {
+        body.innerHTML = '<tr><td colspan="4" class="table-empty">No payments yet.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = payments
+        .map((payment) => {
+            const statusClass =
+                payment.status === "verified"
+                    ? "pay-verified"
+                    : payment.status === "rejected"
+                      ? "pay-rejected"
+                      : "pay-pending";
+            const reference = escapeHtml(payment.reference);
+            const coin = escapeHtml(payment.coin);
+            const amount = escapeHtml(formatCurrency(payment.amount_usd));
+            const status = escapeHtml(payment.status.replace(/_/g, " "));
+            return `
+                <tr>
+                    <td>${reference}</td>
+                    <td>${coin}</td>
+                    <td>${amount}</td>
+                    <td><span class="pay-pill ${statusClass}">${status}</span></td>
+                </tr>
+            `;
+        })
+        .join("");
+}
+
+function renderPlayersTable(players) {
+    const body = qs("#players-table-body");
+    if (!body) return;
+
+    if (!Array.isArray(players) || !players.length) {
+        body.innerHTML = '<tr><td colspan="4" class="table-empty">No players available.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = players
+        .map((player) => {
+            const statusClass = player.status === "watch" ? "status-watch" : "status-active";
+            const username = escapeHtml(player.username);
+            const status = escapeHtml(player.status);
+            const riskScore = escapeHtml(player.risk_score);
+            const lastSeen = escapeHtml(formatRelativeTime(player.last_seen_at));
+            return `
+                <tr>
+                    <td>${username}</td>
+                    <td><span class="status-pill ${statusClass}">${status}</span></td>
+                    <td>${riskScore}</td>
+                    <td>${lastSeen}</td>
+                </tr>
+            `;
+        })
+        .join("");
+}
+
+function renderRulesetsTable(rulesets) {
+    const body = qs("#rulesets-table-body");
+    if (!body) return;
+
+    if (!Array.isArray(rulesets) || !rulesets.length) {
+        body.innerHTML = '<tr><td colspan="4" class="table-empty">No rulesets configured.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = rulesets
+        .map((rule) => {
+            const statusClass = rule.status === "enforced" ? "status-enforced" : "status-monitor";
+            const name = escapeHtml(rule.name);
+            const status = escapeHtml(rule.status);
+            const coverage = escapeHtml(`${rule.coverage_pct}%`);
+            const lastTriggered = escapeHtml(formatRelativeTime(rule.last_triggered_at || rule.updated_at));
+            return `
+                <tr>
+                    <td>${name}</td>
+                    <td><span class="status-pill ${statusClass}">${status}</span></td>
+                    <td>${coverage}</td>
+                    <td>${lastTriggered}</td>
+                </tr>
+            `;
+        })
+        .join("");
+}
+
+async function loadDashboardData() {
+    const data = await requestJson("/api/dashboard/overview");
+    let detectionEvents = Array.isArray(data.events) ? data.events : [];
+
+    try {
+        const detections = await requestJson("/api/dashboard/detections?limit=80");
+        if (Array.isArray(detections.events)) {
+            detectionEvents = detections.events;
+        }
+    } catch (error) {
+        detectionEvents = Array.isArray(data.events) ? data.events : [];
+    }
+
+    const summary = data.summary || {};
+    const trends = data.trends || {};
+    const events = Array.isArray(data.events) ? data.events : [];
+    const payments = Array.isArray(data.payments) ? data.payments : [];
+    const players = Array.isArray(data.players) ? data.players : [];
+    const rulesets = Array.isArray(data.rulesets) ? data.rulesets : [];
+    const hasLiveData =
+        events.length > 0 ||
+        detectionEvents.length > 0 ||
+        payments.length > 0 ||
+        players.length > 0 ||
+        rulesets.length > 0;
+
+    const sessions = Number(summary.sessionsScanned || 0);
+    const blocked = Number(summary.blockedThreats || 0);
+    const activePlayers = Number(summary.activePlayers || 0);
+    const activeRulesets = Number(summary.activeRulesets || 0);
+    const verifiedRevenue = Number(summary.verifiedRevenueUsd || 0);
+    const latency = Number(summary.latencyOverheadPct);
+    const confidence = Number(summary.threatConfidencePct);
+
+    setElementText("#metric-sessions", hasLiveData ? formatNumber(sessions) : "--");
+    setElementText("#metric-blocked", hasLiveData ? formatNumber(blocked) : "--");
+    setElementText("#metric-latency", hasLiveData && Number.isFinite(latency) ? formatPercent(latency, 2) : "--");
+    setElementText(
+        "#metric-confidence",
+        hasLiveData && Number.isFinite(confidence) ? formatPercent(confidence, 2) : "--"
+    );
+    setElementText("#metric-players", hasLiveData ? formatNumber(activePlayers) : "--");
+    setElementText("#metric-rulesets", hasLiveData ? formatNumber(activeRulesets) : "--");
+    setElementText("#metric-revenue", hasLiveData ? formatCurrency(verifiedRevenue) : "--");
+    setElementText("#last-refresh", hasLiveData ? `Updated ${formatRelativeTime(data.generatedAt)}` : "Waiting for live data");
+
+    drawLineChart(qs("#threat-trend-chart"), trends.labels || [], trends.detections || []);
+    drawBarChart(qs("#payments-trend-chart"), trends.verifiedPayments || []);
+
+    renderEventsTable(events, "#overview-events-body");
+    renderEventsTable(detectionEvents, "#detections-table-body");
+    renderPaymentsTable(payments, "#overview-payments-body");
+    renderPlayersTable(players);
+    renderRulesetsTable(rulesets);
 }
 
 async function copyToClipboard(text) {
     if (!text) return false;
-
     try {
         if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(text);
@@ -417,192 +1099,662 @@ async function copyToClipboard(text) {
     }
 }
 
-function getWalletUri(coin, wallet) {
-    if (!wallet) return "";
-    if (coin === "ETH") return "ethereum:" + wallet;
-    if (coin === "BTC") return "bitcoin:" + wallet;
-    if (coin === "SOL") return "solana:" + wallet;
-    return "";
+function applyDashboardUser(auth) {
+    const user = auth || {};
+    const name = user.name || "User";
+    const email = user.email || "--";
+    const hasPaidAccess = Boolean(user.hasPaidAccess);
+    const plan = hasPaidAccess ? user.plan || "Lifetime" : "Not Activated";
+
+    setSelectedPlan(user.plan || "Lifetime");
+    setElementText("#dashboard-user-name", name);
+    setElementText("#dashboard-user-email", email);
+    setElementText("#dashboard-plan-name", plan);
+    setElementText("#settings-current-name", name);
+    setElementText("#settings-current-email", email);
+
+    const nameInput = qs("#settings-display-name");
+    if (nameInput instanceof HTMLInputElement && document.activeElement !== nameInput) {
+        nameInput.value = name;
+    }
+
+    const avatarInput = qs("#settings-avatar-url");
+    if (avatarInput instanceof HTMLInputElement && document.activeElement !== avatarInput) {
+        avatarInput.value = user.avatarUrl || "";
+    }
+
+    renderAvatar(qs("#dashboard-user-avatar"), user, name);
+    renderAvatar(qs("#settings-avatar-preview"), user, name);
 }
 
-function initCryptoPayments(auth) {
-    const checkoutForm = qs("#crypto-checkout-form");
-    if (!checkoutForm) return;
+function initProfileSettings(auth, onUserUpdated) {
+    const form = qs("#profile-settings-form");
+    if (!(form instanceof HTMLFormElement)) return;
+    let currentAuth = auth || {};
 
-    const cryptoPlanInput = qs("#crypto-plan");
-    const cryptoAmountInput = qs("#crypto-amount");
-    const cryptoCoinInput = qs("#crypto-coin");
-    const cryptoWalletInput = qs("#crypto-wallet");
-    const copyWalletButton = qs("#copy-wallet-btn");
-    const walletPayLink = qs("#wallet-pay-link");
-    const networkNote = qs("#crypto-network-note");
-    const txHashInput = qs("#crypto-txhash");
-    const cryptoStatus = qs("#crypto-status");
-    const walletCopyStatus = qs("#wallet-copy-status");
+    const nameInput = qs("#settings-display-name");
+    const avatarInput = qs("#settings-avatar-url");
+    const status = qs("#profile-settings-status");
 
-    function setCheckoutStatus(message, isError) {
-        if (!cryptoStatus) return;
-        cryptoStatus.textContent = message;
-        cryptoStatus.style.color = isError ? "#fb7185" : "";
+    if (nameInput instanceof HTMLInputElement) {
+        nameInput.value = currentAuth.name || "";
+    }
+    if (avatarInput instanceof HTMLInputElement) {
+        avatarInput.value = currentAuth.avatarUrl || "";
     }
 
-    function setWalletCopyStatus(message, isError) {
-        if (!walletCopyStatus) return;
-        walletCopyStatus.textContent = message;
-        walletCopyStatus.style.color = isError ? "#fb7185" : "";
+    function setProfileStatus(message, isError) {
+        if (!status) return;
+        status.textContent = message;
+        status.style.color = isError ? "#ff9db2" : "";
     }
 
-    function syncSelectedWallet() {
-        const coin = cryptoCoinInput instanceof HTMLSelectElement ? cryptoCoinInput.value : "ETH";
-        const wallet = CRYPTO_WALLETS[coin] || "";
+    const preview = () => {
+        const draftName =
+            nameInput instanceof HTMLInputElement && nameInput.value.trim()
+                ? nameInput.value.trim()
+                : currentAuth.name || "User";
+        const draftAvatar = avatarInput instanceof HTMLInputElement ? avatarInput.value.trim() : "";
+        renderAvatar(qs("#settings-avatar-preview"), { name: draftName, avatarUrl: draftAvatar }, draftName);
+    };
 
-        if (cryptoWalletInput instanceof HTMLInputElement) {
-            cryptoWalletInput.value = wallet;
+    if (nameInput instanceof HTMLInputElement) {
+        nameInput.addEventListener("input", preview);
+    }
+    if (avatarInput instanceof HTMLInputElement) {
+        avatarInput.addEventListener("input", preview);
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const name = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
+        const avatarUrl = avatarInput instanceof HTMLInputElement ? avatarInput.value.trim() : "";
+
+        if (name.length < 2) {
+            setProfileStatus("Display name must be at least 2 characters.", true);
+            return;
         }
+
+        setProfileStatus("Saving profile...", false);
+        try {
+            const result = await requestJson("/api/auth/profile", {
+                method: "PATCH",
+                body: {
+                    name,
+                    avatarUrl
+                }
+            });
+            if (result?.user) {
+                currentAuth = result.user;
+            }
+            if (typeof onUserUpdated === "function" && result?.user) {
+                onUserUpdated(result.user);
+            }
+            setProfileStatus("Profile saved.", false);
+        } catch (error) {
+            setProfileStatus(error.message || "Could not update profile.", true);
+        }
+    });
+}
+
+async function initCryptoPayments(auth, options = {}) {
+    const createForm = qs("#invoice-create-form");
+    if (!(createForm instanceof HTMLFormElement)) return;
+    const hasPaidAccess = Boolean(auth?.hasPaidAccess);
+    const invoiceOnlyMode = Boolean(options?.invoiceOnlyMode);
+    const lockedCoin = normalizeCoin(options?.lockedCoin);
+    const fixedProductId = String(options?.fixedProductId || "").trim();
+
+    const productInput = qs("#invoice-product");
+    const coinInput = qs("#invoice-coin");
+    const createStatus = qs("#invoice-create-status");
+    const submitStatus = qs("#invoice-submit-status");
+    const txHashInput = qs("#invoice-txhash");
+    const submitButton = qs("#invoice-submit-btn");
+    const copyWalletButton = qs("#invoice-copy-wallet-btn");
+    const walletInput = qs("#invoice-wallet");
+    const walletLink = qs("#invoice-wallet-link");
+    const networkNote = qs("#invoice-network-note");
+    const walletCopyStatus = qs("#wallet-copy-status");
+    const viewOrdersButton = qs("#invoice-view-orders-btn");
+
+    const invoiceIdEl = qs("#invoice-id");
+    const invoiceStatusEl = qs("#invoice-status");
+    const invoiceCountdownEl = qs("#invoice-countdown");
+    const productNameEl = qs("#invoice-product-name");
+    const productTermEl = qs("#invoice-product-term");
+    const productAmountEl = qs("#invoice-product-amount");
+    const dateEl = qs("#invoice-date");
+    const paymentCoinEl = qs("#invoice-payment-coin");
+    const totalEl = qs("#invoice-total");
+    const accountNameEl = qs("#invoice-account-name");
+    const accountEmailEl = qs("#invoice-account-email");
+    const sendAmountEl = qs("#invoice-send-amount");
+    const sendCoinEl = qs("#invoice-send-coin");
+    const requiredAmountEl = qs("#invoice-required-amount");
+
+    const fallbackProducts = [
+        {
+            id: "radon_anti_cheat_lifetime",
+            name: "Radon Anti Cheat",
+            termLabel: "Lifetime Access",
+            priceUsd: 15,
+            defaultCoin: "ETH"
+        }
+    ];
+
+    let walletMap = { ...DEFAULT_WALLETS };
+    let products = [...fallbackProducts];
+    let currentInvoice = null;
+    let countdownTimer = null;
+
+    function setStatus(node, message, isError) {
+        if (!node) return;
+        node.textContent = message;
+        node.style.color = isError ? "#ff9db2" : "";
+    }
+
+    function coinLabel(coin) {
+        if (coin === "ETH") return "Ethereum";
+        if (coin === "BTC") return "Bitcoin";
+        if (coin === "SOL") return "Solana";
+        return coin || "--";
+    }
+
+    function invoiceStatusLabel(status) {
+        if (status === "awaiting_payment") return "Awaiting Payment";
+        if (status === "pending_verification") return "Pending Verification";
+        if (status === "verified") return "Paid";
+        if (status === "rejected") return "Rejected";
+        if (status === "expired") return "Expired";
+        return String(status || "Awaiting Payment");
+    }
+
+    function setInvoiceStatus(status) {
+        if (!invoiceStatusEl) return;
+        invoiceStatusEl.textContent = invoiceStatusLabel(status);
+        invoiceStatusEl.classList.remove("status-verified", "status-rejected", "status-expired");
+        if (status === "verified") {
+            invoiceStatusEl.classList.add("status-verified");
+        } else if (status === "rejected") {
+            invoiceStatusEl.classList.add("status-rejected");
+        } else if (status === "expired") {
+            invoiceStatusEl.classList.add("status-expired");
+        }
+    }
+
+    function stopCountdown() {
+        if (countdownTimer) {
+            window.clearInterval(countdownTimer);
+            countdownTimer = null;
+        }
+    }
+
+    function startCountdown(expiresAt) {
+        stopCountdown();
+        if (!invoiceCountdownEl || !expiresAt) {
+            if (invoiceCountdownEl) invoiceCountdownEl.textContent = "--:--";
+            return;
+        }
+
+        const update = () => {
+            const end = new Date(expiresAt).getTime();
+            const remaining = Math.max(0, end - Date.now());
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            invoiceCountdownEl.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+            if (remaining <= 0) {
+                stopCountdown();
+                if (currentInvoice && currentInvoice.status === "awaiting_payment") {
+                    currentInvoice.status = "expired";
+                    setInvoiceStatus("expired");
+                }
+            }
+        };
+
+        update();
+        countdownTimer = window.setInterval(update, 1000);
+    }
+
+    function syncWalletCodes() {
+        setElementText("#wallet-eth", walletMap.ETH || "");
+        setElementText("#wallet-btc", walletMap.BTC || "");
+        setElementText("#wallet-sol", walletMap.SOL || "");
+    }
+
+    function renderInvoice(invoice) {
+        currentInvoice = invoice || null;
+        const activeProduct = products.find((product) => product.id === invoice?.productId) || products[0] || null;
+        const amount = Number(invoice?.amountUsd || activeProduct?.priceUsd || 0);
+        const coin = normalizeCoin(invoice?.coin || (coinInput instanceof HTMLSelectElement ? coinInput.value : "ETH")) || "ETH";
+        const wallet = String(invoice?.wallet || walletMap[coin] || "");
+
+        if (invoiceIdEl) invoiceIdEl.textContent = invoice?.id || "--";
+        if (productNameEl) productNameEl.textContent = invoice?.productName || activeProduct?.name || "--";
+        if (productTermEl) productTermEl.textContent = invoice?.termLabel || activeProduct?.termLabel || "--";
+        if (productAmountEl) productAmountEl.textContent = formatCurrencyPrecise(amount);
+        if (dateEl) {
+            const sourceDate = invoice?.createdAt || new Date().toISOString();
+            dateEl.textContent = new Date(sourceDate).toLocaleDateString("en-US");
+        }
+        if (paymentCoinEl) paymentCoinEl.textContent = coinLabel(coin);
+        if (totalEl) totalEl.textContent = `${formatCurrencyPrecise(amount)} USD`;
+        if (sendAmountEl) sendAmountEl.textContent = `${formatCurrencyPrecise(amount)} USD`;
+        if (sendCoinEl) sendCoinEl.textContent = coinLabel(coin);
+        setElementText("#checkout-selected-coin", coinLabel(coin));
+        if (requiredAmountEl) {
+            if (invoice?.requiredAmount) {
+                requiredAmountEl.textContent = `Minimum accepted: ${invoice.requiredAmount} ${coin}`;
+            } else {
+                requiredAmountEl.textContent = "Minimum accepted: --";
+            }
+        }
+        if (walletInput instanceof HTMLInputElement) walletInput.value = wallet;
 
         if (networkNote) {
             networkNote.textContent = wallet
-                ? "Send " + coin + " on " + (CRYPTO_NETWORKS[coin] || "the correct network") + "."
-                : "No receiving wallet configured for this coin.";
+                ? `Send ${coinLabel(coin)} on ${NETWORK_LABELS[coin] || "the correct network"}.`
+                : "No wallet configured for this coin.";
+        }
+        if (walletLink instanceof HTMLAnchorElement) {
+            const uri = walletUri(coin, wallet);
+            walletLink.href = uri || "#";
+            walletLink.classList.toggle("disabled-link", !uri);
         }
 
-        if (walletPayLink) {
-            const uri = getWalletUri(coin, wallet);
-            walletPayLink.href = uri || "#";
-            walletPayLink.classList.toggle("disabled-link", !uri);
+        setInvoiceStatus(invoice?.status || "awaiting_payment");
+        if (invoice?.status === "awaiting_payment" || invoice?.status === "pending_verification") {
+            startCountdown(invoice?.expiresAt || null);
+        } else {
+            stopCountdown();
+            if (invoiceCountdownEl) {
+                invoiceCountdownEl.textContent = "--:--";
+            }
         }
     }
 
-    if (cryptoPlanInput instanceof HTMLSelectElement) {
-        cryptoPlanInput.value = auth.plan || getSelectedPlan();
+    function getPreferredProductId() {
+        if (fixedProductId && products.some((product) => product.id === fixedProductId)) {
+            return fixedProductId;
+        }
+        if (productInput instanceof HTMLSelectElement && productInput.value) {
+            return productInput.value;
+        }
+        return products[0]?.id || "";
     }
 
-    const planPrices = {
-        Starter: "29",
-        Pro: "79",
-        Enterprise: "199"
-    };
+    function getPreferredCoin() {
+        if (lockedCoin) return lockedCoin;
+        if (coinInput instanceof HTMLSelectElement) {
+            return normalizeCoin(coinInput.value) || "ETH";
+        }
+        return "ETH";
+    }
 
-    if (cryptoPlanInput instanceof HTMLSelectElement && cryptoAmountInput instanceof HTMLInputElement) {
-        const current = planPrices[cryptoPlanInput.value];
-        if (current) cryptoAmountInput.value = current;
+    function populateProducts() {
+        if (!(productInput instanceof HTMLSelectElement)) return;
+        productInput.innerHTML = products
+            .map((product) => {
+                const label = `${product.name} - ${product.termLabel} - ${formatCurrencyPrecise(product.priceUsd)}`;
+                return `<option value="${escapeHtml(product.id)}">${escapeHtml(label)}</option>`;
+            })
+            .join("");
 
-        cryptoPlanInput.addEventListener("change", () => {
-            const mapped = planPrices[cryptoPlanInput.value];
-            if (mapped) {
-                cryptoAmountInput.value = mapped;
+        const savedProduct = safeRead(STORAGE_KEYS.selectedProduct);
+        const hasSaved = products.some((product) => product.id === savedProduct);
+        productInput.value = hasSaved ? savedProduct : products[0]?.id || "";
+
+        if (fixedProductId && products.some((product) => product.id === fixedProductId)) {
+            productInput.value = fixedProductId;
+        }
+    }
+
+    async function createInvoice(productId, coin, silent) {
+        const response = await requestJson("/api/billing/invoices", {
+            method: "POST",
+            body: { productId, coin }
+        });
+
+        if (!response?.invoice) {
+            throw new Error("Invoice could not be created.");
+        }
+
+        renderInvoice(response.invoice);
+        setStatus(
+            createStatus,
+            response.reused ? "Existing pending invoice loaded." : "Invoice created. Complete payment and submit tx hash.",
+            false
+        );
+        if (!silent && txHashInput instanceof HTMLInputElement) {
+            txHashInput.focus();
+        }
+        return response.invoice;
+    }
+
+    async function refreshInvoices() {
+        try {
+            const payload = await requestJson("/api/billing/invoices?limit=10");
+            const invoices = Array.isArray(payload?.invoices) ? payload.invoices : [];
+            const preferredProductId = getPreferredProductId();
+            const preferredCoin = getPreferredCoin();
+            const active =
+                invoices.find(
+                    (invoice) =>
+                        ["awaiting_payment", "pending_verification"].includes(invoice.status) &&
+                        (!preferredProductId || invoice.productId === preferredProductId) &&
+                        (!preferredCoin || normalizeCoin(invoice.coin) === preferredCoin)
+                ) ||
+                invoices.find(
+                    (invoice) =>
+                        (!preferredProductId || invoice.productId === preferredProductId) &&
+                        (!preferredCoin || normalizeCoin(invoice.coin) === preferredCoin)
+                ) ||
+                invoices.find((invoice) => ["awaiting_payment", "pending_verification"].includes(invoice.status)) ||
+                invoices[0] ||
+                null;
+            if (active) {
+                renderInvoice(active);
+            }
+        } catch (error) {
+            /* no-op */
+        }
+    }
+
+    accountNameEl && (accountNameEl.textContent = auth?.name || "--");
+    accountEmailEl && (accountEmailEl.textContent = auth?.email || "--");
+
+    try {
+        const catalog = await requestJson("/api/billing/catalog");
+        walletMap = { ...walletMap, ...(catalog.wallets || {}) };
+        if (Array.isArray(catalog.products) && catalog.products.length) {
+            products = catalog.products;
+        }
+
+        if (coinInput instanceof HTMLSelectElement && Array.isArray(catalog.supportedCoins)) {
+            const options = catalog.supportedCoins
+                .filter((coin) => ["ETH", "BTC", "SOL"].includes(coin))
+                .map((coin) => `<option value="${coin}">${escapeHtml(coinLabel(coin))}</option>`)
+                .join("");
+            if (options) {
+                coinInput.innerHTML = options;
+            }
+        }
+    } catch (error) {
+        setStatus(createStatus, "Could not refresh billing catalog. Using local defaults.", true);
+    }
+
+    syncWalletCodes();
+    populateProducts();
+
+    if (coinInput instanceof HTMLSelectElement) {
+        const preferredCoin = lockedCoin || normalizeCoin(safeRead(STORAGE_KEYS.selectedCoin)) || "ETH";
+        coinInput.value = preferredCoin;
+        safeWrite(STORAGE_KEYS.selectedCoin, preferredCoin);
+    }
+
+    if (invoiceOnlyMode) {
+        createForm.hidden = true;
+        createForm.setAttribute("aria-hidden", "true");
+        if (productInput instanceof HTMLSelectElement) {
+            productInput.disabled = true;
+        }
+        if (coinInput instanceof HTMLSelectElement) {
+            coinInput.disabled = true;
+        }
+    }
+
+    renderInvoice(null);
+
+    if (productInput instanceof HTMLSelectElement) {
+        productInput.addEventListener("change", () => {
+            safeWrite(STORAGE_KEYS.selectedProduct, productInput.value);
+            const selected = products.find((product) => product.id === productInput.value);
+            if (selected) {
+                renderInvoice({
+                    ...currentInvoice,
+                    productId: selected.id,
+                    productName: selected.name,
+                    termLabel: selected.termLabel,
+                    amountUsd: selected.priceUsd
+                });
+                if (coinInput instanceof HTMLSelectElement && selected.defaultCoin) {
+                    coinInput.value = selected.defaultCoin;
+                }
             }
         });
     }
 
-    if (cryptoCoinInput instanceof HTMLSelectElement) {
-        cryptoCoinInput.addEventListener("change", () => {
-            syncSelectedWallet();
-            setCheckoutStatus("", false);
+    if (coinInput instanceof HTMLSelectElement) {
+        coinInput.addEventListener("change", () => {
+            const nextCoin = coinInput.value;
+            safeWrite(STORAGE_KEYS.selectedCoin, nextCoin);
+            renderInvoice({
+                ...currentInvoice,
+                coin: nextCoin,
+                wallet: walletMap[nextCoin] || ""
+            });
+        });
+    }
+
+    createForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const productId = productInput instanceof HTMLSelectElement ? productInput.value : "";
+        const coin = coinInput instanceof HTMLSelectElement ? coinInput.value : "ETH";
+
+        if (!productId) {
+            setStatus(createStatus, "Select a product before creating invoice.", true);
+            return;
+        }
+
+        setStatus(createStatus, "Creating invoice...", false);
+        try {
+            safeWrite(STORAGE_KEYS.selectedProduct, productId);
+            await createInvoice(productId, coin, false);
+            if (hasPaidAccess) {
+                await loadDashboardData();
+            }
+        } catch (error) {
+            setStatus(createStatus, error.message || "Invoice creation failed.", true);
+        }
+    });
+
+    if (submitButton) {
+        submitButton.addEventListener("click", async () => {
+            if (!currentInvoice?.id) {
+                setStatus(submitStatus, "Create an invoice first.", true);
+                return;
+            }
+
+            const txHash = txHashInput instanceof HTMLInputElement ? txHashInput.value.trim() : "";
+            if (!txHash) {
+                setStatus(submitStatus, "Enter a transaction hash / ID.", true);
+                return;
+            }
+
+            setStatus(submitStatus, "Submitting transaction for verification...", false);
+            try {
+                const result = await requestJson(`/api/billing/invoices/${encodeURIComponent(currentInvoice.id)}/submit-tx`, {
+                    method: "POST",
+                    body: { txHash }
+                });
+
+                if (txHashInput instanceof HTMLInputElement) {
+                    txHashInput.value = "";
+                }
+                if (result?.invoice) {
+                    renderInvoice(result.invoice);
+                }
+                setStatus(submitStatus, result?.payment?.message || "Transaction submitted.", result?.payment?.status === "rejected");
+                if (result?.payment?.status === "verified") {
+                    setStatus(submitStatus, "Payment verified. Unlocking dashboard...", false);
+                    window.setTimeout(() => {
+                        window.location.href = "dashboard.html";
+                    }, 700);
+                    return;
+                }
+                if (hasPaidAccess) {
+                    await loadDashboardData();
+                }
+            } catch (error) {
+                if (error?.payload?.invoice) {
+                    renderInvoice(error.payload.invoice);
+                }
+                setStatus(submitStatus, error.message || "Could not verify transaction.", true);
+            }
         });
     }
 
     if (copyWalletButton) {
         copyWalletButton.addEventListener("click", async () => {
-            const wallet = cryptoWalletInput instanceof HTMLInputElement ? cryptoWalletInput.value.trim() : "";
+            const wallet = walletInput instanceof HTMLInputElement ? walletInput.value.trim() : "";
             const copied = await copyToClipboard(wallet);
-            setCheckoutStatus(copied ? "Wallet address copied." : "Could not copy wallet address.", !copied);
+            setStatus(submitStatus, copied ? "Wallet copied." : "Could not copy wallet.", !copied);
         });
     }
 
     qsa("[data-copy-wallet-symbol]").forEach((button) => {
         button.addEventListener("click", async () => {
             const coin = button.getAttribute("data-copy-wallet-symbol");
-            const wallet = coin ? CRYPTO_WALLETS[coin] : "";
+            const wallet = coin ? walletMap[coin] || "" : "";
             const copied = await copyToClipboard(wallet);
-            setWalletCopyStatus(
-                copied ? coin + " wallet copied." : "Could not copy " + coin + " wallet.",
-                !copied
-            );
+            setStatus(walletCopyStatus, copied ? `${coin} wallet copied.` : `Could not copy ${coin} wallet.`, !copied);
         });
     });
 
-    syncSelectedWallet();
+    if (viewOrdersButton) {
+        viewOrdersButton.addEventListener("click", () => {
+            if (invoiceOnlyMode) {
+                window.location.href = hasPaidAccess ? "dashboard.html" : "index.html#pricing";
+                return;
+            }
+            const target = qs('.sidebar-nav [data-tab-target="overview"]');
+            if (target instanceof HTMLElement) {
+                target.click();
+            }
+        });
+    }
 
-    checkoutForm.addEventListener("submit", (event) => {
-        event.preventDefault();
+    await refreshInvoices();
+    const productId = getPreferredProductId();
+    const coin = getPreferredCoin();
+    const shouldCreatePreferredInvoice =
+        !currentInvoice ||
+        !["awaiting_payment", "pending_verification"].includes(String(currentInvoice.status || "")) ||
+        (productId && currentInvoice.productId !== productId) ||
+        (coin && normalizeCoin(currentInvoice.coin) !== coin);
 
-        const plan = cryptoPlanInput instanceof HTMLSelectElement ? cryptoPlanInput.value : "";
-        const amount = cryptoAmountInput instanceof HTMLInputElement ? Number(cryptoAmountInput.value.trim()) : NaN;
-        const coin = cryptoCoinInput instanceof HTMLSelectElement ? cryptoCoinInput.value : "";
-        const wallet = cryptoWalletInput instanceof HTMLInputElement ? cryptoWalletInput.value.trim() : "";
-        const txHash = txHashInput instanceof HTMLInputElement ? txHashInput.value.trim() : "";
-
-        if (!plan || !coin || !wallet || !txHash || !Number.isFinite(amount) || amount <= 0) {
-            setCheckoutStatus("Complete all fields before submitting payment.", true);
-            return;
+    if (productId && shouldCreatePreferredInvoice) {
+        try {
+            await createInvoice(productId, coin, true);
+        } catch (error) {
+            setStatus(createStatus, "Create an invoice to start checkout.", false);
         }
-
-        const reference = "PAY-" + Date.now().toString(36).toUpperCase();
-        const payload = {
-            reference,
-            accountEmail: auth.email,
-            plan,
-            amountUsd: amount,
-            coin,
-            wallet,
-            txHash,
-            status: "pending_verification",
-            createdAt: new Date().toISOString()
-        };
-
-        storeCryptoRequest(payload);
-
-        if (txHashInput instanceof HTMLInputElement) {
-            txHashInput.value = "";
-        }
-
-        setCheckoutStatus(
-            "Payment submitted as " +
-                reference +
-                ". Status: pending verification.",
-            false
-        );
-    });
+    }
 }
 
-function initDashboardPage() {
-    const dashboardRoot = qs(".dashboard-layout");
-    if (!dashboardRoot) return;
+async function initCheckoutPage() {
+    const checkoutRoot = qs(".checkout-page");
+    if (!(checkoutRoot instanceof HTMLElement)) return;
 
-    const auth = safeReadJson(STORAGE_KEYS.auth, null);
-    if (!auth || !auth.email) {
-        window.location.href = "login.html";
+    const requestedCoin = normalizeCoin(new URLSearchParams(window.location.search).get("coin")) || "ETH";
+    safeWrite(STORAGE_KEYS.selectedCoin, requestedCoin);
+    setSelectedPlan("Lifetime");
+
+    let auth;
+    try {
+        const me = await requestJson("/api/auth/me");
+        auth = me?.user || null;
+    } catch (error) {
+        if (isUnauthorized(error)) {
+            const redirectTarget = `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
+            window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
+            return;
+        }
         return;
     }
 
-    const userEmail = qs("#dashboard-user-email");
-    const planName = qs("#dashboard-plan-name");
+    if (!auth) {
+        const redirectTarget = `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
+        window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
+        return;
+    }
+
+    if (auth.hasPaidAccess) {
+        window.location.href = "dashboard.html";
+        return;
+    }
+
+    await initCryptoPayments(auth, {
+        invoiceOnlyMode: true,
+        lockedCoin: requestedCoin,
+        fixedProductId: "radon_anti_cheat_lifetime"
+    });
+}
+
+async function initDashboardPage() {
+    const dashboardRoot = qs(".dashboard-layout");
+    if (!dashboardRoot) return;
+
+    let auth;
+    try {
+        const me = await requestJson("/api/auth/me");
+        auth = me.user;
+    } catch (error) {
+        window.location.href = "login.html?mode=signin";
+        return;
+    }
+
+    const onUserUpdated = (nextUser) => {
+        auth = { ...auth, ...(nextUser || {}) };
+        applyDashboardUser(auth);
+    };
+
+    if (!auth?.hasPaidAccess) {
+        window.location.href = "checkout.html";
+        return;
+    }
+
+    onUserUpdated(auth);
+
     const logoutLink = qs("#logout-link");
-
-    if (userEmail) {
-        userEmail.textContent = auth.email;
-    }
-
-    if (planName) {
-        planName.textContent = auth.plan || getSelectedPlan();
-    }
-
     if (logoutLink) {
-        logoutLink.addEventListener("click", () => {
-            safeRemove(STORAGE_KEYS.auth);
+        logoutLink.addEventListener("click", async (event) => {
+            event.preventDefault();
+            try {
+                await requestJson("/api/auth/logout", { method: "POST" });
+            } catch (error) {
+                /* ignore and continue redirect */
+            }
+            window.location.href = "index.html";
         });
     }
 
     initDashboardSidebar();
     initDashboardTabs();
-    initCryptoPayments(auth);
+    initProfileSettings(auth, onUserUpdated);
+    await initCryptoPayments(auth);
+    if (auth?.hasPaidAccess) {
+        await loadDashboardData();
+    }
+
+    if (auth?.hasPaidAccess) {
+        window.setInterval(() => {
+            loadDashboardData().catch(() => undefined);
+        }, 30000);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     initMobileNav();
     initFaq();
     initPlanSelection();
-    initLoginPage();
-    initDashboardPage();
+    initCheckoutModal();
+    initHomeAuthNav().catch(() => undefined);
+    initHomeIconIntro();
+    initHomeScrollReveal();
+    initLoginPage().catch(() => undefined);
+    initCheckoutPage().catch(() => undefined);
+    initDashboardPage().catch(() => undefined);
 });
+

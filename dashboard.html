@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Radon</title>
-    <meta name="theme-color" content="#101318">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%23e11d48' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <meta name="theme-color" content="#0B1220">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z' fill='none' stroke='%233B82F6' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
 </head>
-<body>
+<body class="dashboard-page">
+    <a class="skip-link" href="#dashboard-main">Skip to content</a>
     <div class="dashboard-layout">
-        <aside class="sidebar">
+        <aside class="sidebar" id="dashboard-sidebar">
             <a class="sidebar-brand" href="index.html">
                 <svg viewBox="0 0 200 200" width="24" height="24" aria-hidden="true">
                     <path d="M100 30 L60 70 L65 130 L100 165 L135 130 L140 70 Z" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -31,119 +32,335 @@
             <a id="logout-link" class="nav-item logout-link" href="index.html">Logout</a>
         </aside>
 
-        <main class="main-content">
+        <main class="main-content" id="dashboard-main">
             <header class="dashboard-header">
                 <div class="header-left">
-                    <button class="menu-toggle" type="button" aria-label="Toggle sidebar">
+                    <button class="menu-toggle" type="button" aria-label="Toggle sidebar" aria-expanded="false" aria-controls="dashboard-sidebar">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M3 12h18M3 6h18M3 18h18"></path>
                         </svg>
                     </button>
                     <div>
                         <h1>Dashboard</h1>
-                        <p class="muted">Plan: <strong id="dashboard-plan-name">Starter</strong></p>
+                        <p class="muted">Plan: <strong id="dashboard-plan-name">Lifetime</strong></p>
                     </div>
                 </div>
 
-                <div class="user-chip" id="dashboard-user-email">admin@radon.gg</div>
+                <div class="header-right">
+                    <p class="muted refresh-note" id="last-refresh">Updated --</p>
+                    <div class="user-chip" id="dashboard-user-chip">
+                        <span class="user-chip-avatar" id="dashboard-user-avatar" aria-hidden="true">R</span>
+                        <div class="user-chip-meta">
+                            <strong id="dashboard-user-name">Radon User</strong>
+                            <span id="dashboard-user-email">admin@radon.gg</span>
+                        </div>
+                    </div>
+                </div>
             </header>
 
             <section class="dash-panel is-active" data-tab-panel="overview">
-                <article class="card panel-card empty-state">
-                    <h2>Overview is currently empty</h2>
-                    <p class="muted">No live metrics yet. Connect your services and data sources to populate this dashboard.</p>
+                <div class="metric-grid">
+                    <article class="card metric-card">
+                        <p>Sessions scanned</p>
+                        <strong id="metric-sessions">--</strong>
+                    </article>
+                    <article class="card metric-card">
+                        <p>Blocked threats</p>
+                        <strong id="metric-blocked">--</strong>
+                    </article>
+                    <article class="card metric-card">
+                        <p>Latency overhead</p>
+                        <strong id="metric-latency">--</strong>
+                    </article>
+                    <article class="card metric-card">
+                        <p>Threat confidence</p>
+                        <strong id="metric-confidence">--</strong>
+                    </article>
+                    <article class="card metric-card">
+                        <p>Active players</p>
+                        <strong id="metric-players">--</strong>
+                    </article>
+                    <article class="card metric-card">
+                        <p>Active rulesets</p>
+                        <strong id="metric-rulesets">--</strong>
+                    </article>
+                    <article class="card metric-card">
+                        <p>Verified revenue</p>
+                        <strong id="metric-revenue">--</strong>
+                    </article>
+                </div>
+
+                <article class="card panel-card chart-card">
+                    <div class="panel-head">
+                        <h2>Threat trend (7 days)</h2>
+                        <p class="muted">Daily detection count from server event logs.</p>
+                    </div>
+                    <canvas id="threat-trend-chart" width="960" height="250" role="img" aria-label="Threat detections in the last 7 days"></canvas>
                 </article>
+
+                <div class="panel-grid two-up">
+                    <article class="card panel-card">
+                        <div class="panel-head">
+                            <h2>Recent security events</h2>
+                            <p class="muted">Newest alerts captured by the defense pipeline.</p>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Severity</th>
+                                        <th>Actor</th>
+                                        <th>When</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overview-events-body"></tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="card panel-card">
+                        <div class="panel-head">
+                            <h2>Payment verification trend</h2>
+                            <p class="muted">Verified on-chain payments over the same period.</p>
+                        </div>
+                        <canvas id="payments-trend-chart" width="960" height="190" role="img" aria-label="Verified payments in the last 7 days"></canvas>
+                        <div class="table-wrap compact">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Reference</th>
+                                        <th>Coin</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overview-payments-body"></tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
             </section>
 
             <section class="dash-panel" data-tab-panel="detections" hidden>
-                <article class="card panel-card empty-state">
-                    <h2>No detections yet</h2>
-                    <p class="muted">When Radon flags suspicious activity, events will show here.</p>
+                <article class="card panel-card">
+                    <div class="panel-head">
+                        <h2>Detection stream</h2>
+                        <p class="muted">Real-time security events sorted by latest activity.</p>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Severity</th>
+                                    <th>Actor</th>
+                                    <th>When</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detections-table-body"></tbody>
+                        </table>
+                    </div>
                 </article>
             </section>
 
             <section class="dash-panel" data-tab-panel="players" hidden>
-                <article class="card panel-card empty-state">
-                    <h2>No player data yet</h2>
-                    <p class="muted">Player activity and profiles will appear after your first connected server.</p>
+                <article class="card panel-card">
+                    <div class="panel-head">
+                        <h2>Player risk board</h2>
+                        <p class="muted">Current player risk scores and visibility status.</p>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Status</th>
+                                    <th>Risk</th>
+                                    <th>Last seen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="players-table-body"></tbody>
+                        </table>
+                    </div>
                 </article>
             </section>
 
             <section class="dash-panel" data-tab-panel="rulesets" hidden>
-                <article class="card panel-card empty-state">
-                    <h2>No rulesets configured</h2>
-                    <p class="muted">Create or import rulesets to begin monitoring behavior patterns.</p>
+                <article class="card panel-card">
+                    <div class="panel-head">
+                        <h2>Ruleset health</h2>
+                        <p class="muted">Live status and coverage for enforcement rulesets.</p>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ruleset</th>
+                                    <th>Status</th>
+                                    <th>Coverage</th>
+                                    <th>Last triggered</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rulesets-table-body"></tbody>
+                        </table>
+                    </div>
                 </article>
             </section>
 
             <section class="dash-panel" data-tab-panel="billing" hidden>
-                <article class="card panel-card">
-                    <div class="panel-head">
-                        <h2>Crypto payments</h2>
-                        <p class="muted">Send payment to your configured wallets, then submit the transaction hash for review.</p>
-                    </div>
-
-                    <form id="crypto-checkout-form" class="form-grid" novalidate>
-                        <label class="form-label" for="crypto-plan">Plan</label>
-                        <select class="form-input" id="crypto-plan" required>
-                            <option value="Starter">Starter</option>
-                            <option value="Pro">Pro</option>
-                            <option value="Enterprise">Enterprise</option>
-                        </select>
-
-                        <label class="form-label" for="crypto-amount">Amount (USD)</label>
-                        <input class="form-input" type="number" id="crypto-amount" min="1" step="1" placeholder="99" required>
-
-                        <label class="form-label" for="crypto-coin">Coin</label>
-                        <select class="form-input" id="crypto-coin" required>
-                            <option value="ETH">ETH</option>
-                            <option value="BTC">BTC</option>
-                            <option value="SOL">SOL</option>
-                        </select>
-
-                        <label class="form-label" for="crypto-wallet">Send to wallet address</label>
-                        <div class="wallet-row">
-                            <input class="form-input" type="text" id="crypto-wallet" readonly aria-readonly="true">
-                            <button class="btn btn-ghost" type="button" id="copy-wallet-btn">Copy</button>
+                <div class="panel-grid two-up billing-grid">
+                    <article class="card panel-card">
+                        <div class="panel-head">
+                            <h2>Create invoice</h2>
+                            <p class="muted">Generate a crypto invoice for your selected product.</p>
                         </div>
-                        <p class="muted inline-note" id="crypto-network-note"></p>
-                        <a class="btn btn-ghost wallet-link-btn" id="wallet-pay-link" href="#" target="_blank" rel="noopener">Open in wallet</a>
 
-                        <label class="form-label" for="crypto-txhash">Transaction hash</label>
-                        <input class="form-input" type="text" id="crypto-txhash" placeholder="Paste blockchain transaction hash" required>
+                        <form id="invoice-create-form" class="form-grid" novalidate>
+                            <label class="form-label" for="invoice-product">Product</label>
+                            <select class="form-input" id="invoice-product" required></select>
 
-                        <button class="btn btn-primary" type="submit">I sent payment</button>
-                        <p class="muted crypto-status" id="crypto-status" aria-live="polite"></p>
-                    </form>
-                </article>
+                            <label class="form-label" for="invoice-coin">Payment</label>
+                            <select class="form-input" id="invoice-coin" required>
+                                <option value="ETH">Ethereum</option>
+                                <option value="BTC">Bitcoin</option>
+                                <option value="SOL">Solana</option>
+                            </select>
+
+                            <button class="btn btn-primary" type="submit" id="create-invoice-btn">Create invoice</button>
+                            <p class="muted crypto-status" id="invoice-create-status" aria-live="polite"></p>
+                        </form>
+                    </article>
+
+                    <article class="card panel-card invoice-shell">
+                        <div class="invoice-head-row">
+                            <div>
+                                <p class="invoice-meta-label">Invoice ID</p>
+                                <code class="invoice-id" id="invoice-id">--</code>
+                            </div>
+                            <div class="invoice-status-box">
+                                <p class="invoice-status" id="invoice-status">Awaiting Payment</p>
+                                <p class="invoice-timer"><span id="invoice-countdown">--:--</span> remaining</p>
+                            </div>
+                        </div>
+
+                        <div class="invoice-item">
+                            <h3 id="invoice-product-name">Radon Anti Cheat</h3>
+                            <p class="muted" id="invoice-product-term">Lifetime Access</p>
+                            <p class="invoice-amount" id="invoice-product-amount">$15.00</p>
+                        </div>
+
+                        <dl class="invoice-summary">
+                            <div>
+                                <dt>Date</dt>
+                                <dd id="invoice-date">--</dd>
+                            </div>
+                            <div>
+                                <dt>Payment</dt>
+                                <dd id="invoice-payment-coin">Ethereum</dd>
+                            </div>
+                            <div>
+                                <dt>Total</dt>
+                                <dd id="invoice-total">$15.00 USD</dd>
+                            </div>
+                            <div>
+                                <dt>Account</dt>
+                                <dd><span id="invoice-account-name">--</span> <span class="muted" id="invoice-account-email">--</span></dd>
+                            </div>
+                        </dl>
+
+                        <div class="invoice-instructions">
+                            <h4>Payment Instructions</h4>
+                            <p>Send <strong id="invoice-send-amount">$15.00 USD</strong> in <strong id="invoice-send-coin">Ethereum</strong> to:</p>
+                            <p class="muted" id="invoice-required-amount">Minimum accepted: --</p>
+                            <div class="wallet-row">
+                                <input class="form-input" type="text" id="invoice-wallet" readonly aria-readonly="true">
+                                <button class="btn btn-ghost" type="button" id="invoice-copy-wallet-btn">Copy</button>
+                            </div>
+                            <p class="muted inline-note" id="invoice-network-note">Use the correct network for the selected coin.</p>
+                            <a class="btn btn-ghost wallet-link-btn" id="invoice-wallet-link" href="#" target="_blank" rel="noopener">Open in wallet</a>
+                        </div>
+
+                        <div class="invoice-submit">
+                            <h4>Submit Transaction ID</h4>
+                            <p class="muted">Paste your transaction hash below so we can verify your payment.</p>
+                            <input class="form-input" type="text" id="invoice-txhash" placeholder="Enter transaction hash / ID">
+                            <button class="btn btn-primary" type="button" id="invoice-submit-btn">Submit transaction</button>
+                            <p class="muted crypto-status" id="invoice-submit-status" aria-live="polite"></p>
+                        </div>
+
+                        <div class="invoice-next">
+                            <h4>What happens next?</h4>
+                            <ul class="invoice-steps">
+                                <li>Complete the payment using the details above.</li>
+                                <li>Submit your transaction ID.</li>
+                                <li>Verification is nearly instant once payment is confirmed.</li>
+                                <li>Your order is marked verified in your dashboard once confirmed.</li>
+                            </ul>
+                        </div>
+
+                        <div class="invoice-actions">
+                            <button class="btn btn-ghost" type="button" id="invoice-view-orders-btn">View All Orders</button>
+                            <a class="btn btn-ghost" href="index.html#pricing">Continue Shopping</a>
+                        </div>
+                    </article>
+                </div>
             </section>
 
             <section class="dash-panel" data-tab-panel="settings" hidden>
-                <article class="card panel-card">
-                    <div class="panel-head">
-                        <h2>Receiving wallets</h2>
-                        <p class="muted">These are the active addresses used by checkout.</p>
-                    </div>
+                <div class="panel-grid two-up settings-grid">
+                    <article class="card panel-card">
+                        <div class="panel-head">
+                            <h2>Profile</h2>
+                            <p class="muted">Manage your display name and avatar shown around the site.</p>
+                        </div>
 
-                    <div class="wallet-list">
-                        <div class="wallet-item">
-                            <p class="wallet-symbol">ETH</p>
-                            <code class="wallet-code" id="wallet-eth">0x9D575B4e92063BD6FA3e5b478Fa5EBFc8d531241</code>
-                            <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="ETH">Copy</button>
+                        <form id="profile-settings-form" class="form-grid" novalidate>
+                            <div class="profile-preview">
+                                <span class="profile-avatar" id="settings-avatar-preview" aria-hidden="true">R</span>
+                                <div class="profile-preview-meta">
+                                    <p id="settings-current-name">Radon User</p>
+                                    <p class="muted" id="settings-current-email">admin@radon.gg</p>
+                                </div>
+                            </div>
+
+                            <label class="form-label" for="settings-display-name">Display name</label>
+                            <input class="form-input" type="text" id="settings-display-name" placeholder="Your name" required>
+
+                            <label class="form-label" for="settings-avatar-url">Avatar image URL (optional)</label>
+                            <input class="form-input" type="url" id="settings-avatar-url" placeholder="https://example.com/avatar.png">
+
+                            <button class="btn btn-primary" type="submit">Save profile</button>
+                            <p class="muted crypto-status" id="profile-settings-status" aria-live="polite"></p>
+                        </form>
+                    </article>
+
+                    <article class="card panel-card">
+                        <div class="panel-head">
+                            <h2>Receiving wallets</h2>
+                            <p class="muted">These server-side addresses are used for payment verification.</p>
                         </div>
-                        <div class="wallet-item">
-                            <p class="wallet-symbol">BTC</p>
-                            <code class="wallet-code" id="wallet-btc">bc1qlluym8r3tr3cql9eatng7ydy050d526m8g9e4n</code>
-                            <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="BTC">Copy</button>
+
+                        <div class="wallet-list">
+                            <div class="wallet-item">
+                                <p class="wallet-symbol">ETH</p>
+                                <code class="wallet-code" id="wallet-eth">0x9D575B4e92063BD6FA3e5b478Fa5EBFc8d531241</code>
+                                <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="ETH">Copy</button>
+                            </div>
+                            <div class="wallet-item">
+                                <p class="wallet-symbol">BTC</p>
+                                <code class="wallet-code" id="wallet-btc">bc1p0wpgtfk3h6zv98had7kzfvgte4l237cmmt0sads7jg7n47lcknxsf0n2st</code>
+                                <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="BTC">Copy</button>
+                            </div>
+                            <div class="wallet-item">
+                                <p class="wallet-symbol">SOL</p>
+                                <code class="wallet-code" id="wallet-sol">7ykaKV7RtPnHpckJBH5p3rxmSdAP1Z2598BmbqeuHK7Y</code>
+                                <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="SOL">Copy</button>
+                            </div>
                         </div>
-                        <div class="wallet-item">
-                            <p class="wallet-symbol">SOL</p>
-                            <code class="wallet-code" id="wallet-sol">7ykaKV7RtPnHpckJBH5p3rxmSdAP1Z2598BmbqeuHK7Y</code>
-                            <button class="btn btn-ghost wallet-copy-btn" type="button" data-copy-wallet-symbol="SOL">Copy</button>
-                        </div>
-                    </div>
-                    <p class="muted crypto-status" id="wallet-copy-status" aria-live="polite"></p>
-                </article>
+                        <p class="muted crypto-status" id="wallet-copy-status" aria-live="polite"></p>
+                    </article>
+                </div>
             </section>
         </main>
     </div>
@@ -151,3 +368,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
