@@ -4,7 +4,9 @@ const STORAGE_KEYS = {
     selectedProduct: "radon_selected_product",
     selectedCoin: "radon_selected_coin",
     selectedPaymentMethod: "radon_selected_payment_method",
-    pendingDodoSession: "radon_pending_dodo_session"
+    pendingDodoSession: "radon_pending_dodo_session",
+    checkoutLoginLoopCount: "radon_checkout_login_loop_count",
+    checkoutLoginLoopAt: "radon_checkout_login_loop_at"
 };
 
 const DEFAULT_WALLETS = {
@@ -27,6 +29,9 @@ const CHECKOUT_METHODS = Object.freeze({
     CRYPTO: "crypto",
     CARD: "card"
 });
+
+const CHECKOUT_LOGIN_LOOP_WINDOW_MS = 15000;
+const CHECKOUT_LOGIN_LOOP_LIMIT = 2;
 
 function normalizeCoin(value) {
     const normalized = String(value || "")
@@ -72,6 +77,61 @@ function safeRemove(key) {
     } catch (error) {
         return;
     }
+}
+
+function safeSessionRead(key) {
+    try {
+        return sessionStorage.getItem(key);
+    } catch (error) {
+        return null;
+    }
+}
+
+function safeSessionWrite(key, value) {
+    try {
+        sessionStorage.setItem(key, value);
+    } catch (error) {
+        return;
+    }
+}
+
+function safeSessionRemove(key) {
+    try {
+        sessionStorage.removeItem(key);
+    } catch (error) {
+        return;
+    }
+}
+
+function getCheckoutLoginLoopState() {
+    const count = Number(safeSessionRead(STORAGE_KEYS.checkoutLoginLoopCount) || 0);
+    const lastAt = Number(safeSessionRead(STORAGE_KEYS.checkoutLoginLoopAt) || 0);
+    const withinWindow = lastAt > 0 && Date.now() - lastAt <= CHECKOUT_LOGIN_LOOP_WINDOW_MS;
+
+    if (!withinWindow) {
+        return {
+            count: 0,
+            lastAt: 0
+        };
+    }
+
+    return {
+        count,
+        lastAt
+    };
+}
+
+function recordCheckoutLoginLoopBounce() {
+    const previous = getCheckoutLoginLoopState();
+    const nextCount = previous.count + 1;
+    safeSessionWrite(STORAGE_KEYS.checkoutLoginLoopCount, String(nextCount));
+    safeSessionWrite(STORAGE_KEYS.checkoutLoginLoopAt, String(Date.now()));
+    return nextCount;
+}
+
+function clearCheckoutLoginLoopState() {
+    safeSessionRemove(STORAGE_KEYS.checkoutLoginLoopCount);
+    safeSessionRemove(STORAGE_KEYS.checkoutLoginLoopAt);
 }
 
 function getSelectedPlan() {
@@ -141,6 +201,12 @@ async function requestJson(url, options = {}) {
         },
         credentials: "same-origin"
     };
+
+    if (typeof url === "string" && url.startsWith("/api/")) {
+        request.cache = "no-store";
+        request.headers["Cache-Control"] = "no-store";
+        request.headers.Pragma = "no-cache";
+    }
 
     if (options.body !== undefined) {
         request.headers["Content-Type"] = "application/json";
@@ -608,8 +674,13 @@ function resolveAuthRedirectTarget(user) {
     if (raw) {
         try {
             const parsed = new URL(raw, window.location.origin);
-            if (parsed.origin === window.location.origin && parsed.pathname.endsWith(".html")) {
-                return `${parsed.pathname.replace(/^\//, "")}${parsed.search}${parsed.hash}`;
+            const pathname = parsed.pathname.replace(/^\//, "");
+            const extensionlessPages = ["index", "login", "checkout", "dashboard"];
+            const isAllowedPath =
+                pathname === "" || pathname.endsWith(".html") || extensionlessPages.includes(pathname);
+            if (parsed.origin === window.location.origin && isAllowedPath) {
+                const normalizedPath = pathname || "index.html";
+                return `${normalizedPath}${parsed.search}${parsed.hash}`;
             }
         } catch (error) {
             /* ignore invalid redirect and use defaults */
@@ -646,6 +717,7 @@ async function initLoginPage() {
     const passwordInput = qs("#password");
     const confirmInput = qs("#confirm-password");
     const rememberInput = qs("#remember-me");
+    const params = new URLSearchParams(window.location.search);
 
     let mode = "create";
 
@@ -689,7 +761,7 @@ async function initLoginPage() {
         setStatus("", false);
     }
 
-    const queryMode = new URLSearchParams(window.location.search).get("mode");
+    const queryMode = params.get("mode");
     setMode(queryMode === "signin" ? "signin" : "create");
 
     modeButtons.forEach((button) => {
@@ -712,6 +784,14 @@ async function initLoginPage() {
 
     try {
         const me = await requestJson("/api/auth/me");
+        const hasRedirect = Boolean(String(params.get("redirect") || "").trim());
+        const loopState = getCheckoutLoginLoopState();
+        if (hasRedirect && loopState.count >= CHECKOUT_LOGIN_LOOP_LIMIT) {
+            clearCheckoutLoginLoopState();
+            setStatus("Session keeps bouncing. Sign in again to continue checkout.", true);
+            return;
+        }
+        clearCheckoutLoginLoopState();
         window.location.href = resolveAuthRedirectTarget(me?.user || null);
         return;
     } catch (error) {
@@ -773,6 +853,7 @@ async function initLoginPage() {
             }
 
             setStatus("Success. Redirecting...", false);
+            clearCheckoutLoginLoopState();
             window.location.href = resolveAuthRedirectTarget(authResult?.user || null);
         } catch (error) {
             setStatus(error.message || "Authentication failed.", true);
@@ -1890,20 +1971,25 @@ async function initCheckoutPage() {
             ? "checkout.html?method=card"
             : `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
 
+    function redirectToLogin() {
+        recordCheckoutLoginLoopBounce();
+        window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
+    }
+
     let auth;
     try {
         const me = await requestJson("/api/auth/me");
         auth = me?.user || null;
     } catch (error) {
         if (isUnauthorized(error)) {
-            window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
+            redirectToLogin();
             return;
         }
         return;
     }
 
     if (!auth) {
-        window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
+        redirectToLogin();
         return;
     }
 
