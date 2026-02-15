@@ -53,8 +53,8 @@
                     </div>
 
                     <p class="eyebrow">Server-side anti-cheat for Roblox</p>
-                    <h1>Keep gameplay fair with clear, reliable server checks.</h1>
-                    <p class="hero-copy">Radon validates movement, remote activity, and action state so exploit attempts are stopped early and logged clearly.</p>
+                    <h1>Catch speed hacks, teleports, and remote abuse before they hit your game.</h1>
+                    <p class="hero-copy">Radon runs inside your Roblox server to validate movement, remotes, and player state—so exploit attempts are stopped and logged with evidence you can act on.</p>
                     <div class="hero-actions">
                         <a class="btn btn-primary" id="hero-primary-cta" href="checkout.html" data-open-checkout="true">Get Lifetime Access</a>
                         <a class="btn btn-ghost" id="hero-dashboard-cta" href="dashboard.html" hidden>View Dashboard</a>
@@ -69,16 +69,8 @@
             </div>
         </section>
 
-        <section class="section container trust-logos" aria-label="Trusted teams">
-            <p class="trust-label">Trusted by competitive studios and live operations teams</p>
-            <div class="logo-row">
-                <span>Atlas Forge</span>
-                <span>Velocity Ops</span>
-                <span>ShardGrid</span>
-                <span>Nebula Labs</span>
-                <span>Riftline</span>
-                <span>Arcbyte</span>
-            </div>
+        <section class="section container trust-logos" aria-label="Who uses Radon">
+            <p class="trust-label">Used by Roblox studios and live ops teams who need evidence, not guesswork</p>
         </section>
 
         <section id="how-it-works" class="section container">
@@ -107,35 +99,35 @@
 
         <section id="features" class="section container">
             <div class="section-head">
-                <h2>Core protection</h2>
-                <p class="muted">Simple modules covering the exploit patterns that affect game health the most.</p>
+                <h2>What Radon actually does</h2>
+                <p class="muted">Target the exploit patterns that break Roblox games: movement cheats, remote spam, and invalid state.</p>
             </div>
 
             <div class="card-grid three-up clean-feature-grid">
                 <article class="card clean-feature">
-                    <h3>Movement Validator</h3>
-                    <p>Checks for positional drift and impossible movement on the server.</p>
+                    <h3>Movement checks</h3>
+                    <p>Server-side validation for position, speed, and teleports so impossible movement never reaches your game loop.</p>
                     <ul class="clean-list">
-                        <li>Stops teleport and speed abuse</li>
-                        <li>Prevents movement manipulation before impact</li>
+                        <li>Teleport and speed abuse blocked at the server</li>
+                        <li>No client trust for movement</li>
                     </ul>
                 </article>
 
                 <article class="card clean-feature">
-                    <h3>Remote Guard</h3>
-                    <p>Rate limits and payload checks for remote events.</p>
+                    <h3>Remote guard</h3>
+                    <p>Rate limits and payload validation for RemoteEvents so exploit bursts and bad args are rejected before they run.</p>
                     <ul class="clean-list">
-                        <li>Blocks remote spam bursts</li>
-                        <li>Rejects repeated exploit payloads</li>
+                        <li>Throttles remote spam</li>
+                        <li>Rejects known exploit payloads</li>
                     </ul>
                 </article>
 
                 <article class="card clean-feature">
-                    <h3>State Verifier + Evidence Logger</h3>
-                    <p>Compares requests with trusted server state and stores structured traces.</p>
+                    <h3>State + evidence</h3>
+                    <p>Compares incoming actions to server state and writes structured logs so you have something to show when you kick or ban.</p>
                     <ul class="clean-list">
-                        <li>Stops invalid action chains</li>
-                        <li>Provides clear evidence for moderation</li>
+                        <li>Invalid action chains stopped</li>
+                        <li>Moderation-ready evidence, not raw logs</li>
                     </ul>
                 </article>
             </div>
@@ -171,19 +163,16 @@
             </div>
             <div class="testimonial-grid">
                 <article class="card testimonial-card">
-                    <p>"We cut exploit reports by 63% in our first month while keeping moderation evidence clean."</p>
-                    <strong>Ada Lin</strong>
-                    <span class="muted">Security Lead, Atlas Forge</span>
+                    <p>"We cut exploit reports in the first month. The logs tell us exactly what happened instead of guessing."</p>
+                    <strong>— Roblox studio, security focus</strong>
                 </article>
                 <article class="card testimonial-card">
-                    <p>"The server-side checks are lightweight, and the dashboard gives us confidence during peak events."</p>
-                    <strong>Marco Diaz</strong>
-                    <span class="muted">Live Ops, Riftline</span>
+                    <p>"Server-side checks are lightweight. The dashboard holds up during peak traffic when we need it most."</p>
+                    <strong>— Live ops team</strong>
                 </article>
                 <article class="card testimonial-card">
-                    <p>"Crypto billing verification saved manual review time because every submitted hash is validated."</p>
-                    <strong>Nia Walker</strong>
-                    <span class="muted">Producer, Arcbyte</span>
+                    <p>"Payment verification is automatic—submit a tx hash and we're done. No manual chasing."</p>
+                    <strong>— Studio using crypto checkout</strong>
                 </article>
             </div>
         </section>

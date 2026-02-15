@@ -31,35 +31,19 @@
 
     <main id="checkout-main" class="checkout-main container">
         <section class="checkout-grid">
-            <article class="card panel-card checkout-auth-gate" id="checkout-auth-gate" hidden aria-hidden="true">
-                <p class="checkout-eyebrow">Secure Checkout</p>
-                <h2>Sign in to continue</h2>
-                <p class="muted">Continue to your Radon dashboard. Selected plan: <strong>Lifetime</strong>.</p>
-                <form id="checkout-auth-form" class="checkout-inline-auth-form" novalidate>
-                    <label class="form-label" for="checkout-auth-email">Email</label>
-                    <input class="form-input" type="email" id="checkout-auth-email" placeholder="name@example.com" required autocomplete="email">
-                    <label class="form-label" for="checkout-auth-password">Password</label>
-                    <input class="form-input" type="password" id="checkout-auth-password" placeholder="********" required autocomplete="current-password">
-                    <label class="check-row muted">
-                        <input type="checkbox" id="checkout-auth-remember">
-                        Remember this email
-                    </label>
-                    <p class="auth-status muted" id="checkout-auth-status" aria-live="polite"></p>
-                    <button class="btn btn-primary btn-full" type="submit" id="checkout-auth-submit">Sign in</button>
-                </form>
-                <p class="muted checkout-auth-links">
-                    <a href="index.html">Back to Home</a>
-                    <span aria-hidden="true"> · </span>
-                    <a href="index.html#pricing">Pricing</a>
-                    <span aria-hidden="true"> · </span>
-                    <a id="checkout-auth-create-link" href="login.html?mode=create">Create account</a>
-                </p>
-            </article>
             <article class="card panel-card checkout-intro-card">
                 <p class="checkout-eyebrow">Secure Checkout</p>
                 <h1>Complete your Radon Lifetime payment</h1>
-                <p class="muted">Choose crypto invoice checkout or secure card checkout with Dodo Payments. Access unlocks automatically after verification.</p>
+                <p class="muted">Crypto invoice or card checkout with Dodo Payments. Access unlocks automatically after verification.</p>
                 <p class="muted checkout-selected-coin">Selected payment method: <strong id="checkout-selected-coin">Ethereum</strong></p>
+                <div class="checkout-wallet-preview checkout-crypto-only" id="checkout-wallet-preview" hidden aria-hidden="true">
+                    <p class="checkout-wallet-label">Send <strong id="checkout-wallet-amount">$15.00</strong> in <strong id="checkout-wallet-coin">Ethereum</strong> to:</p>
+                    <div class="wallet-row">
+                        <input class="form-input" type="text" id="checkout-wallet-address" readonly aria-readonly="true">
+                        <button class="btn btn-ghost" type="button" id="checkout-wallet-copy-btn" aria-label="Copy address">Copy</button>
+                    </div>
+                    <p class="muted inline-note" id="checkout-wallet-network"></p>
+                </div>
             </article>
 
             <article class="card panel-card dodo-card-shell" id="dodo-card-shell">

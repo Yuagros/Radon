@@ -1904,16 +1904,19 @@ svg {
     justify-content: flex-end;
 }
 
-.checkout-auth-gate .checkout-inline-auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-    margin-top: 1rem;
+.checkout-wallet-preview {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(88, 136, 236, 0.2);
 }
 
-.checkout-auth-gate .checkout-auth-links {
-    margin-top: 1.25rem;
-    font-size: 0.9rem;
+.checkout-wallet-preview .wallet-row {
+    margin-top: 0.5rem;
+}
+
+.checkout-wallet-preview .inline-note {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
 }
 
 .checkout-modal-status {

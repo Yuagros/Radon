@@ -340,7 +340,9 @@ async function requestJson(url, options = {}) {
     }
 
     if (!response.ok) {
-        const error = new Error(payload?.error || "Request failed.");
+        const raw = (payload && (payload.message ?? payload.error)) || "";
+        const message = typeof raw === "string" && raw.trim() ? raw.trim() : "Request failed.";
+        const error = new Error(message);
         error.status = response.status;
         error.payload = payload;
         throw error;
@@ -2060,78 +2062,6 @@ async function initCardCheckout(auth) {
     }
 }
 
-function showCheckoutAuthGate(checkoutRoot, redirectTarget) {
-    const authGate = qs("#checkout-auth-gate");
-    const paymentSections = checkoutRoot.querySelectorAll(
-        ".checkout-intro-card, .dodo-card-shell, #invoice-create-form, .invoice-shell"
-    );
-    if (!(authGate instanceof HTMLElement)) return;
-
-    authGate.hidden = false;
-    authGate.setAttribute("aria-hidden", "false");
-    paymentSections.forEach((el) => {
-        if (el instanceof HTMLElement) {
-            el.hidden = true;
-            el.setAttribute("aria-hidden", "true");
-        }
-    });
-
-    const createLink = qs("#checkout-auth-create-link");
-    if (createLink instanceof HTMLAnchorElement) {
-        createLink.href = `login.html?mode=create&redirect=${encodeURIComponent(redirectTarget)}`;
-    }
-
-    const emailInput = qs("#checkout-auth-email");
-    const passwordInput = qs("#checkout-auth-password");
-    const rememberInput = qs("#checkout-auth-remember");
-    const statusEl = qs("#checkout-auth-status");
-    const submitBtn = qs("#checkout-auth-submit");
-    const form = qs("#checkout-auth-form");
-
-    const rememberedEmail = safeRead(STORAGE_KEYS.rememberedEmail);
-    if (rememberedEmail && emailInput instanceof HTMLInputElement) {
-        emailInput.value = rememberedEmail;
-        if (rememberInput instanceof HTMLInputElement) rememberInput.checked = true;
-    }
-
-    function setStatus(msg, isError) {
-        if (!(statusEl instanceof HTMLElement)) return;
-        statusEl.textContent = msg;
-        statusEl.style.color = isError ? "#ffb980" : "";
-    }
-
-    if (!(form instanceof HTMLFormElement)) return;
-    form.onsubmit = null;
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = emailInput instanceof HTMLInputElement ? emailInput.value.trim() : "";
-        const password = passwordInput instanceof HTMLInputElement ? passwordInput.value : "";
-        if (!email || !password) {
-            setStatus("Email and password are required.", true);
-            return;
-        }
-        if (rememberInput instanceof HTMLInputElement && rememberInput.checked) {
-            safeWrite(STORAGE_KEYS.rememberedEmail, email);
-        } else {
-            safeRemove(STORAGE_KEYS.rememberedEmail);
-        }
-        if (submitBtn) submitBtn.setAttribute("disabled", "true");
-        setStatus("Signing in...", false);
-        try {
-            await requestJson("/api/auth/login", {
-                method: "POST",
-                body: { email, password }
-            });
-            setStatus("Success. Reloading...", false);
-            window.location.reload();
-        } catch (err) {
-            setStatus(err?.message || "Sign in failed.", true);
-        } finally {
-            if (submitBtn) submitBtn.removeAttribute("disabled");
-        }
-    });
-}
-
 async function initCheckoutPage() {
     const checkoutRoot = qs(".checkout-page");
     if (!(checkoutRoot instanceof HTMLElement)) return;
@@ -2163,8 +2093,9 @@ async function initCheckoutPage() {
             ? "checkout.html?method=card"
             : `checkout.html?coin=${encodeURIComponent(requestedCoin)}`;
 
-    function showGate() {
-        showCheckoutAuthGate(checkoutRoot, redirectTarget);
+    function redirectToLogin() {
+        recordAuthRedirectLoopBounce(redirectTarget);
+        window.location.href = `login.html?mode=signin&redirect=${encodeURIComponent(redirectTarget)}`;
     }
 
     let auth = null;
@@ -2187,17 +2118,17 @@ async function initCheckoutPage() {
                 } catch (retryErr) {
                     if (!isUnauthorized(retryErr)) return;
                     if (i === POST_LOGIN_RETRY_DELAYS_MS.length - 1) {
-                        showGate();
+                        redirectToLogin();
                         return;
                     }
                 }
             }
             if (!auth) {
-                showGate();
+                redirectToLogin();
                 return;
             }
         } else if (isUnauthorized(error)) {
-            showGate();
+            redirectToLogin();
             return;
         } else {
             return;
@@ -2205,7 +2136,7 @@ async function initCheckoutPage() {
     }
 
     if (!auth) {
-        showGate();
+        redirectToLogin();
         return;
     }
 
@@ -2220,6 +2151,27 @@ async function initCheckoutPage() {
     if (requestedMethod === CHECKOUT_METHODS.CARD) {
         await initCardCheckout(auth);
         return;
+    }
+
+    const walletPreview = qs("#checkout-wallet-preview");
+    const walletAddressInput = qs("#checkout-wallet-address");
+    const walletCopyBtn = qs("#checkout-wallet-copy-btn");
+    const walletNetworkNote = qs("#checkout-wallet-network");
+    if (walletPreview instanceof HTMLElement && requestedCoin) {
+        const address = DEFAULT_WALLETS[requestedCoin] || "";
+        walletPreview.hidden = !address;
+        walletPreview.setAttribute("aria-hidden", String(!address));
+        setElementText("#checkout-wallet-amount", "$15.00");
+        setElementText("#checkout-wallet-coin", paymentLabel);
+        if (walletAddressInput instanceof HTMLInputElement) walletAddressInput.value = address;
+        if (walletNetworkNote) walletNetworkNote.textContent = NETWORK_LABELS[requestedCoin] || "Use the correct network for the selected coin.";
+        if (walletCopyBtn) {
+            walletCopyBtn.addEventListener("click", async () => {
+                const copied = await copyToClipboard(address);
+                const status = qs("#invoice-create-status");
+                if (status) status.textContent = copied ? "Address copied." : "Could not copy.";
+            });
+        }
     }
 
     await initCryptoPayments(auth, {
