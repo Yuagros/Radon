@@ -1,0 +1,6 @@
+# Cloudflare Pages – static site only (no Functions).
+# This file makes the deployment use repo config and can avoid
+# "Failed to publish your Function" / unknown internal error when no /functions dir exists.
+name = "radonac"
+pages_build_output_dir = "."
+compatibility_date = "2025-02-14"

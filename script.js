@@ -34,7 +34,8 @@ const CHECKOUT_METHODS = Object.freeze({
 
 const AUTH_REDIRECT_LOOP_WINDOW_MS = 20000;
 const AUTH_REDIRECT_LOOP_LIMIT = 2;
-const POST_LOGIN_RETRY_DELAY_MS = 500;
+const POST_LOGIN_REDIRECT_DELAY_MS = 600;
+const POST_LOGIN_RETRY_DELAYS_MS = [600, 1200];
 const APP_PAGES = Object.freeze({
     INDEX: "index",
     LOGIN: "login",
@@ -904,6 +905,7 @@ async function initLoginPage() {
         const redirectUrl = resolveAuthRedirectTarget(me?.user || null);
         if (redirectUrl && (redirectUrl.startsWith("checkout") || redirectUrl.includes("checkout"))) {
             safeSessionWrite(STORAGE_KEYS.postLoginRedirect, "1");
+            await new Promise((r) => setTimeout(r, POST_LOGIN_REDIRECT_DELAY_MS));
         }
         window.location.href = redirectUrl;
         return;
@@ -970,6 +972,7 @@ async function initLoginPage() {
             const redirectUrl = resolveAuthRedirectTarget(authResult?.user || null);
             if (redirectUrl && (redirectUrl.startsWith("checkout") || redirectUrl.includes("checkout"))) {
                 safeSessionWrite(STORAGE_KEYS.postLoginRedirect, "1");
+                await new Promise((r) => setTimeout(r, POST_LOGIN_REDIRECT_DELAY_MS));
             }
             window.location.href = redirectUrl;
         } catch (error) {
@@ -2104,15 +2107,22 @@ async function initCheckoutPage() {
         auth = me?.user || null;
     } catch (error) {
         if (isUnauthorized(error) && hadPostLoginFlag) {
-            await new Promise((r) => setTimeout(r, POST_LOGIN_RETRY_DELAY_MS));
-            try {
-                const retryMe = await requestJson("/api/auth/me");
-                auth = retryMe?.user || null;
-            } catch (retryErr) {
-                if (isUnauthorized(retryErr)) {
-                    redirectToLogin();
-                    return;
+            for (let i = 0; i < POST_LOGIN_RETRY_DELAYS_MS.length; i++) {
+                await new Promise((r) => setTimeout(r, POST_LOGIN_RETRY_DELAYS_MS[i]));
+                try {
+                    const retryMe = await requestJson("/api/auth/me");
+                    auth = retryMe?.user || null;
+                    if (auth) break;
+                } catch (retryErr) {
+                    if (!isUnauthorized(retryErr)) return;
+                    if (i === POST_LOGIN_RETRY_DELAYS_MS.length - 1) {
+                        redirectToLogin();
+                        return;
+                    }
                 }
+            }
+            if (!auth) {
+                redirectToLogin();
                 return;
             }
         } else if (isUnauthorized(error)) {
